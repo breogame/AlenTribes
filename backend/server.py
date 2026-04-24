@@ -1,89 +1,298 @@
-from fastapi import FastAPI, APIRouter
+"""
+Roleplay Stream Board - FastAPI backend with WebSockets.
+In-memory per-room state (no database). Clients connect via WebSocket and
+broadcast actions (card create/update/move/delete, dice rolls, etc).
+"""
+from fastapi import FastAPI, APIRouter, WebSocket, WebSocketDisconnect, HTTPException
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
 import os
-import logging
-from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
+import json
 import uuid
+import logging
+import secrets
+from pathlib import Path
+from typing import Dict, Set, Any
 from datetime import datetime, timezone
 
-
 ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+load_dotenv(ROOT_DIR / ".env")
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
-
-# Create the main app without a prefix
-app = FastAPI()
-
-# Create a router with the /api prefix
+app = FastAPI(title="Roleplay Stream Board")
 api_router = APIRouter(prefix="/api")
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
-    
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+# ---------------------------------------------------------------------------
+# In-memory state
+# ---------------------------------------------------------------------------
+def _default_state() -> Dict[str, Any]:
+    return {
+        "cards": [],          # list of card dicts
+        "library": [],        # saved card templates (by name)
+        "history": [],        # dice roll log (newest first)
+        "background": None,   # optional data URL
+        "scale": 1.0,         # global card scale
+        "diceType": 6,        # 6 | 12
+        "soundEnabled": True,
+    }
 
-# Add your routes to the router instead of directly to app
+
+class Room:
+    def __init__(self, token: str, gm_secret: str, name: str):
+        self.token = token
+        self.gm_secret = gm_secret
+        self.name = name
+        self.state: Dict[str, Any] = _default_state()
+        self.clients: Dict[WebSocket, Dict[str, Any]] = {}  # ws -> {name, isGM}
+
+    def serialize_state(self) -> Dict[str, Any]:
+        return {
+            "type": "STATE",
+            "state": self.state,
+            "users": [
+                {"name": info["name"], "isGM": info["isGM"]}
+                for info in self.clients.values()
+            ],
+            "roomName": self.name,
+        }
+
+
+ROOMS: Dict[str, Room] = {}
+
+
+# ---------------------------------------------------------------------------
+# REST endpoints
+# ---------------------------------------------------------------------------
 @api_router.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Roleplay Stream Board API", "rooms": len(ROOMS)}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-    
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
-    
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
-    
-    return status_checks
+@api_router.post("/room/create")
+async def create_room(payload: Dict[str, Any] | None = None):
+    payload = payload or {}
+    name = (payload.get("name") or "Partida sin nombre")[:80]
+    token = secrets.token_urlsafe(8)
+    gm_secret = secrets.token_urlsafe(16)
+    ROOMS[token] = Room(token=token, gm_secret=gm_secret, name=name)
+    logger.info(f"Created room {token} ('{name}')")
+    return {"token": token, "gmSecret": gm_secret, "name": name}
 
-# Include the router in the main app
+
+@api_router.get("/room/{token}/info")
+async def room_info(token: str):
+    room = ROOMS.get(token)
+    if not room:
+        raise HTTPException(status_code=404, detail="Sala no encontrada")
+    return {
+        "token": room.token,
+        "name": room.name,
+        "users": len(room.clients),
+    }
+
+
+# ---------------------------------------------------------------------------
+# WebSocket endpoint
+# ---------------------------------------------------------------------------
+async def broadcast(room: Room, message: Dict[str, Any], exclude: WebSocket | None = None):
+    payload = json.dumps(message, default=str)
+    dead: list[WebSocket] = []
+    for ws in list(room.clients.keys()):
+        if ws is exclude:
+            continue
+        try:
+            await ws.send_text(payload)
+        except Exception:
+            dead.append(ws)
+    for ws in dead:
+        room.clients.pop(ws, None)
+
+
+def _clamp_history(history: list, limit: int = 200) -> list:
+    return history[:limit]
+
+
+def _apply_action(room: Room, action: Dict[str, Any], sender_name: str) -> bool:
+    """Mutate the room state based on action. Returns True if broadcast needed."""
+    atype = action.get("type")
+    payload = action.get("payload") or {}
+    state = room.state
+
+    if atype == "CARD_CREATE":
+        card = payload.get("card")
+        if card and card.get("id"):
+            state["cards"].append(card)
+            return True
+
+    elif atype == "CARD_UPDATE":
+        card = payload.get("card")
+        if card and card.get("id"):
+            for i, c in enumerate(state["cards"]):
+                if c["id"] == card["id"]:
+                    state["cards"][i] = card
+                    return True
+
+    elif atype == "CARD_PATCH":
+        # Partial update: {id, patch: {...}}
+        cid = payload.get("id")
+        patch = payload.get("patch") or {}
+        for i, c in enumerate(state["cards"]):
+            if c["id"] == cid:
+                state["cards"][i] = {**c, **patch}
+                return True
+
+    elif atype == "CARD_DELETE":
+        cid = payload.get("id")
+        before = len(state["cards"])
+        state["cards"] = [c for c in state["cards"] if c["id"] != cid]
+        return len(state["cards"]) != before
+
+    elif atype == "CARD_DUPLICATE":
+        cid = payload.get("id")
+        for c in state["cards"]:
+            if c["id"] == cid:
+                new_card = {**c, "id": str(uuid.uuid4())}
+                pos = new_card.get("position") or {"x": 0, "y": 0}
+                new_card["position"] = {"x": pos.get("x", 0) + 30, "y": pos.get("y", 0) + 30}
+                new_card["name"] = f"{c.get('name', 'Carta')} (copia)"
+                state["cards"].append(new_card)
+                return True
+
+    elif atype == "BOARD_CLEAR":
+        state["cards"] = []
+        return True
+
+    elif atype == "LIBRARY_UPSERT":
+        # payload: {cards: [...]} - merges by name (new names only)
+        new_cards = payload.get("cards") or []
+        existing_names = {c["name"] for c in state["library"]}
+        added = 0
+        for nc in new_cards:
+            if nc.get("name") and nc["name"] not in existing_names:
+                state["library"].append(nc)
+                existing_names.add(nc["name"])
+                added += 1
+        return added > 0
+
+    elif atype == "LIBRARY_REMOVE":
+        name = payload.get("name")
+        before = len(state["library"])
+        state["library"] = [c for c in state["library"] if c["name"] != name]
+        return len(state["library"]) != before
+
+    elif atype == "LIBRARY_REPLACE":
+        state["library"] = payload.get("cards") or []
+        return True
+
+    elif atype == "DICE_ROLL":
+        roll = payload.get("roll")
+        if roll:
+            # Newest first
+            state["history"].insert(0, roll)
+            state["history"] = _clamp_history(state["history"])
+            return True
+
+    elif atype == "SCALE_SET":
+        scale = float(payload.get("scale") or 1.0)
+        state["scale"] = max(0.4, min(2.5, scale))
+        return True
+
+    elif atype == "BG_SET":
+        state["background"] = payload.get("background")
+        return True
+
+    elif atype == "DICE_TYPE_SET":
+        dt = int(payload.get("diceType") or 6)
+        if dt in (6, 12):
+            state["diceType"] = dt
+            return True
+
+    elif atype == "SOUND_SET":
+        state["soundEnabled"] = bool(payload.get("enabled"))
+        return True
+
+    elif atype == "HISTORY_CLEAR":
+        state["history"] = []
+        return True
+
+    return False
+
+
+@app.websocket("/api/ws/{token}")
+async def websocket_room(ws: WebSocket, token: str):
+    await ws.accept()
+    room = ROOMS.get(token)
+    if not room:
+        await ws.send_text(json.dumps({"type": "ERROR", "message": "Sala no encontrada"}))
+        await ws.close()
+        return
+
+    # Wait for initial JOIN message
+    try:
+        raw = await ws.receive_text()
+        join = json.loads(raw)
+    except Exception:
+        await ws.close()
+        return
+
+    if join.get("type") != "JOIN":
+        await ws.close()
+        return
+
+    name = (join.get("name") or "Invitado")[:40]
+    is_gm = bool(join.get("gmSecret") and join.get("gmSecret") == room.gm_secret)
+    room.clients[ws] = {"name": name, "isGM": is_gm}
+
+    # Send initial state
+    await ws.send_text(json.dumps({
+        "type": "WELCOME",
+        "you": {"name": name, "isGM": is_gm},
+    }))
+    await ws.send_text(json.dumps(room.serialize_state(), default=str))
+    # Notify others
+    await broadcast(room, room.serialize_state(), exclude=ws)
+
+    try:
+        while True:
+            raw = await ws.receive_text()
+            try:
+                msg = json.loads(raw)
+            except json.JSONDecodeError:
+                continue
+
+            # Only GM can mutate state. Dice rolls allowed for everyone.
+            atype = msg.get("type")
+            if not is_gm and atype != "DICE_ROLL":
+                continue
+
+            changed = _apply_action(room, msg, name)
+            if changed:
+                # For card moves, we could broadcast only a light payload, but for
+                # simplicity we broadcast full state (it's small).
+                await broadcast(room, room.serialize_state())
+
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        logger.warning(f"WS error in room {token}: {e}")
+    finally:
+        room.clients.pop(ws, None)
+        try:
+            await broadcast(room, room.serialize_state())
+        except Exception:
+            pass
+        # Optional: clean up empty rooms after a while (not critical).
+
+
 app.include_router(api_router)
 
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=os.environ.get("CORS_ORIGINS", "*").split(","),
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()

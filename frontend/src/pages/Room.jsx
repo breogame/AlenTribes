@@ -1,0 +1,400 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { useRoom } from '@/hooks/useRoom';
+import MainMenu from '@/components/MainMenu';
+import DiceRollerPanel from '@/components/DiceRollerPanel';
+import RollHistoryPanel from '@/components/RollHistoryPanel';
+import CharacterCard from '@/components/CharacterCard';
+import JoinModal from '@/components/JoinModal';
+import CreateCardModal from '@/components/CreateCardModal';
+import LibraryModal from '@/components/LibraryModal';
+import DiceSettingsModal from '@/components/DiceSettingsModal';
+import ShareLinkDialog from '@/components/ShareLinkDialog';
+import InfoDialog from '@/components/InfoDialog';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import { computeDerived, newCardTemplate, clampCardPatch, strippedTemplateFromCard } from '@/lib/cardUtils';
+import { performRoll } from '@/lib/diceLogic';
+import { playDiceSound } from '@/lib/diceSound';
+import { toast } from 'sonner';
+import yaml from 'js-yaml';
+
+const DEFAULT_BG = 'https://static.prod-images.emergentagent.com/jobs/19306555-751c-4468-8aac-7a941afe5487/images/0515e0b800af2624c9c222af71f0e7ef84275a805fcbcacd0319a0a2b3288e8b.png';
+
+export default function Room() {
+  const { token } = useParams();
+  const [searchParams] = useSearchParams();
+  const isGMParam = searchParams.get('gm') === '1';
+
+  const [gmSecret, setGmSecret] = useState(null);
+  const [myName, setMyName] = useState(null);
+
+  // Modal state
+  const [showJoin, setShowJoin] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [editingCard, setEditingCard] = useState(null);
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [showDiceSettings, setShowDiceSettings] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [infoText, setInfoText] = useState(null);
+  const [confirmDel, setConfirmDel] = useState(null); // {id, name}
+  const [lastRollAt, setLastRollAt] = useState(0);
+
+  // Resolve stored GM credentials / player name on mount
+  useEffect(() => {
+    if (!token) return;
+    if (isGMParam) {
+      try {
+        const raw = localStorage.getItem(`rsb:gm:${token}`);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          setGmSecret(parsed.gmSecret);
+          setMyName(parsed.name || 'Game Master');
+          setShowJoin(false);
+          return;
+        }
+      } catch { /* ignore */ }
+    }
+    // Player path: check stored name
+    try {
+      const raw = localStorage.getItem(`rsb:player:${token}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.name) {
+          setMyName(parsed.name);
+          setShowJoin(false);
+          return;
+        }
+      }
+    } catch { /* ignore */ }
+    setShowJoin(true);
+  }, [token, isGMParam]);
+
+  function handleJoin(name) {
+    try {
+      localStorage.setItem(`rsb:player:${token}`, JSON.stringify({ name }));
+    } catch { /* ignore */ }
+    setMyName(name);
+    setShowJoin(false);
+  }
+
+  const { state, you, users, roomName, status, send } = useRoom({
+    token,
+    name: myName,
+    gmSecret,
+  });
+
+  const isGM = !!you?.isGM;
+  const soundOn = state?.soundEnabled !== false;
+  const diceType = state?.diceType || 6;
+  const globalScale = state?.scale || 1;
+  const background = state?.background || DEFAULT_BG;
+
+  // --- Actions (only available when GM, except dice rolls) ---
+  function createCard(cardData) {
+    const template = newCardTemplate({ overrides: cardData });
+    send({ type: 'CARD_CREATE', payload: { card: template } });
+  }
+
+  function updateCard(card) {
+    send({ type: 'CARD_UPDATE', payload: { card } });
+  }
+
+  function patchCard(id, patch) {
+    send({ type: 'CARD_PATCH', payload: { id, patch: clampCardPatch(patch) } });
+  }
+
+  function deleteCard(id) {
+    send({ type: 'CARD_DELETE', payload: { id } });
+  }
+
+  function duplicateCard(id) {
+    send({ type: 'CARD_DUPLICATE', payload: { id } });
+  }
+
+  function clearBoard() {
+    if (!window.confirm('¿Eliminar todas las cartas del tablero?')) return;
+    send({ type: 'BOARD_CLEAR', payload: {} });
+  }
+
+  function addToLibrary(cards) {
+    send({ type: 'LIBRARY_UPSERT', payload: { cards } });
+  }
+
+  function removeFromLibrary(name) {
+    send({ type: 'LIBRARY_REMOVE', payload: { name } });
+  }
+
+  function putOnBoardFromLibrary(template) {
+    createCard({ ...template });
+  }
+
+  function saveBoard() {
+    const cards = (state?.cards || []).map(strippedTemplateFromCard);
+    const data = yaml.dump({ cards }, { noRefs: true, indent: 2 });
+    const blob = new Blob([data], { type: 'text/yaml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cartas_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.yaml`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Cartas exportadas');
+  }
+
+  function loadFile(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = reader.result;
+      let parsed;
+      try {
+        parsed = yaml.load(text);
+      } catch {
+        try {
+          parsed = JSON.parse(text);
+        } catch {
+          toast.error('Archivo no válido (YAML/JSON)');
+          return;
+        }
+      }
+      const arr = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.cards) ? parsed.cards : [];
+      if (!arr.length) {
+        toast.error('El archivo no contiene cartas');
+        return;
+      }
+      addToLibrary(arr);
+      toast.success(`${arr.length} cartas añadidas a la biblioteca`);
+    };
+    reader.readAsText(file);
+  }
+
+  function setScale(next) {
+    send({ type: 'SCALE_SET', payload: { scale: next } });
+  }
+
+  function setDiceType(type) {
+    send({ type: 'DICE_TYPE_SET', payload: { diceType: type } });
+  }
+
+  function setSound(enabled) {
+    send({ type: 'SOUND_SET', payload: { enabled } });
+  }
+
+  function setBackground(dataUrl) {
+    send({ type: 'BG_SET', payload: { background: dataUrl } });
+  }
+
+  function clearHistory() {
+    send({ type: 'HISTORY_CLEAR', payload: {} });
+  }
+
+  function roll({ type, quantity, overrideDiceType }) {
+    if (!myName) return;
+    const effective = type === 'initiative'
+      ? 6  // initiative uses d3 internally (ignored by performRoll)
+      : (overrideDiceType || diceType);
+    const result = performRoll({ type, quantity, diceType: effective });
+    const rollRecord = {
+      id: (crypto.randomUUID && crypto.randomUUID()) || String(Date.now() + Math.random()),
+      user: myName,
+      type,
+      dice: result.dice,
+      sides: result.sides,
+      quantity: result.quantity,
+      total: result.total,
+      diceType: effective,
+      at: new Date().toISOString(),
+    };
+    send({ type: 'DICE_ROLL', payload: { roll: rollRecord } });
+    setLastRollAt(Date.now());
+    if (soundOn) playDiceSound();
+  }
+
+  function rollAttackFromCard(card) {
+    const attackPool = card.modo === 'ranged' ? Number(card.ataqueAD) || 0 : Number(card.ataqueCC) || 0;
+    if (attackPool <= 0) {
+      toast.warning('La reserva de ataque está vacía');
+      return;
+    }
+    roll({ type: 'attack', quantity: attackPool });
+  }
+
+  function rollInitiativeFromCard(card) {
+    const foco = Number(card.foco) || 0;
+    if (foco <= 0) {
+      toast.warning('Esta carta no tiene puntos de foco');
+      return;
+    }
+    roll({ type: 'initiative', quantity: foco });
+  }
+
+  // --- Rendering ---
+
+  const cards = state?.cards || [];
+  const history = state?.history || [];
+  const library = state?.library || [];
+
+  const bgStyle = useMemo(() => ({
+    backgroundImage: `url(${background})`,
+  }), [background]);
+
+  return (
+    <div className="board-root no-select" data-testid="board-root">
+      <div className="board-bg" style={bgStyle} />
+      <div className="grain-overlay" />
+
+      <div className="board-surface">
+        {cards.map((card) => (
+          <CharacterCard
+            key={card.id}
+            card={card}
+            derived={computeDerived(card)}
+            globalScale={globalScale}
+            isGM={isGM}
+            onPatch={(patch) => patchCard(card.id, patch)}
+            onUpdateFull={(c) => updateCard(c)}
+            onMove={(pos) => patchCard(card.id, { position: pos })}
+            onDuplicate={() => duplicateCard(card.id)}
+            onEdit={() => setEditingCard(card)}
+            onRotate={() =>
+              patchCard(card.id, { rotation: ((card.rotation || 0) + 90) % 360 })
+            }
+            onDelete={() => setConfirmDel({ id: card.id, name: card.name })}
+            onInfo={() => setInfoText({ title: card.name, text: card.description })}
+            onAttack={() => rollAttackFromCard(card)}
+            onInitiative={() => rollInitiativeFromCard(card)}
+            onScaleUp={() =>
+              patchCard(card.id, { scale: Math.min(2.2, (card.scale || 1) + 0.1) })
+            }
+            onScaleDown={() =>
+              patchCard(card.id, { scale: Math.max(0.5, (card.scale || 1) - 0.1) })
+            }
+          />
+        ))}
+      </div>
+
+      {/* Top left: Main menu */}
+      {myName && (
+        <MainMenu
+          isGM={isGM}
+          roomName={roomName}
+          users={users}
+          diceType={diceType}
+          soundOn={soundOn}
+          globalScale={globalScale}
+          status={status}
+          onCreateCard={() => setShowCreate(true)}
+          onOpenLibrary={() => setShowLibrary(true)}
+          onSave={saveBoard}
+          onLoadFile={loadFile}
+          onOpenDiceSettings={() => setShowDiceSettings(true)}
+          onScaleUp={() => setScale(Math.min(2.0, globalScale + 0.1))}
+          onScaleDown={() => setScale(Math.max(0.5, globalScale - 0.1))}
+          onScaleReset={() => setScale(1.0)}
+          onClearBoard={clearBoard}
+          onChangeBackground={setBackground}
+          onShareLink={() => setShowShare(true)}
+        />
+      )}
+
+      {/* Bottom left: dice rollers */}
+      {myName && (
+        <DiceRollerPanel
+          diceType={diceType}
+          onRoll={roll}
+          triggerKey={lastRollAt}
+        />
+      )}
+
+      {/* Right: roll history */}
+      {myName && (
+        <RollHistoryPanel
+          history={history}
+          isGM={isGM}
+          onClear={clearHistory}
+        />
+      )}
+
+      {/* Modals */}
+      {showJoin && (
+        <JoinModal onSubmit={handleJoin} defaultName={isGMParam ? 'Game Master' : ''} />
+      )}
+
+      {showCreate && (
+        <CreateCardModal
+          initial={null}
+          onCancel={() => setShowCreate(false)}
+          onSubmit={(data) => {
+            createCard(data);
+            setShowCreate(false);
+          }}
+        />
+      )}
+
+      {editingCard && (
+        <CreateCardModal
+          initial={editingCard}
+          onCancel={() => setEditingCard(null)}
+          onSubmit={(data) => {
+            updateCard({ ...editingCard, ...data });
+            setEditingCard(null);
+          }}
+        />
+      )}
+
+      {showLibrary && (
+        <LibraryModal
+          library={library}
+          onClose={() => setShowLibrary(false)}
+          onPlaceOnBoard={(tpl) => {
+            putOnBoardFromLibrary(tpl);
+            toast.success(`"${tpl.name}" añadida al tablero`);
+          }}
+          onRemove={removeFromLibrary}
+          onSaveCurrentBoardToLibrary={() => {
+            const tpls = cards.map(strippedTemplateFromCard);
+            addToLibrary(tpls);
+            toast.success('Cartas actuales guardadas en la biblioteca');
+          }}
+          isGM={isGM}
+        />
+      )}
+
+      {showDiceSettings && (
+        <DiceSettingsModal
+          diceType={diceType}
+          soundOn={soundOn}
+          onChangeDice={setDiceType}
+          onChangeSound={setSound}
+          onClose={() => setShowDiceSettings(false)}
+        />
+      )}
+
+      {showShare && (
+        <ShareLinkDialog
+          token={token}
+          onClose={() => setShowShare(false)}
+        />
+      )}
+
+      {infoText && (
+        <InfoDialog
+          title={infoText.title}
+          text={infoText.text}
+          onClose={() => setInfoText(null)}
+        />
+      )}
+
+      {confirmDel && (
+        <ConfirmDialog
+          title="Eliminar carta"
+          message={`¿Seguro que quieres eliminar "${confirmDel.name}"? Esta acción no se puede deshacer.`}
+          onCancel={() => setConfirmDel(null)}
+          onConfirm={() => {
+            deleteCard(confirmDel.id);
+            setConfirmDel(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
