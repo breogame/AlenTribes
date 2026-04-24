@@ -1,0 +1,115 @@
+{
+  "theme": "dark",
+  "archetype": "Archetype 5: Jewel & Luxury (Dark Fantasy Variation)",
+  "vibe": "Cinematic, moody, arcane tabletop RPG overlay for OBS stream",
+  "typography": {
+    "heading_font": "Cormorant Garamond",
+    "body_font": "Alegreya Sans",
+    "fallback_fonts": "serif, sans-serif",
+    "scales": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tight",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl tracking-tight",
+      "h3": "text-xl sm:text-2xl",
+      "h4": "text-lg sm:text-xl",
+      "body": "text-base leading-relaxed",
+      "labels": "text-xs tracking-[0.2em] uppercase font-bold"
+    }
+  },
+  "colors": {
+    "backgrounds": {
+      "board": "#0F0F12",
+      "panel": "rgba(20, 20, 24, 0.8)",
+      "card": "rgba(10, 10, 12, 0.85)"
+    },
+    "text": {
+      "primary": "#E2E8F0",
+      "secondary": "#94A3B8",
+      "muted": "#64748B"
+    },
+    "factions": {
+      "crimson_blood": "#8B0000",
+      "deep_forest": "#1B4D3E",
+      "midnight_royal": "#191970",
+      "aged_brass": "#B8860B",
+      "ashen_grey": "#4A5054"
+    },
+    "dice_rolls": {
+      "success_green": "#2E8B57",
+      "fail_red": "#B22222",
+      "crit_purple": "#6A0DAD",
+      "neutral_grey": "#696969"
+    },
+    "borders": {
+      "default": "rgba(255, 255, 255, 0.1)",
+      "focus": "rgba(184, 134, 11, 0.5)"
+    }
+  },
+  "layout_and_spacing": {
+    "board": "relative w-screen h-screen overflow-hidden",
+    "main_menu": "absolute top-4 left-4 z-50 flex flex-col gap-2 w-64",
+    "dice_rollers": "absolute bottom-4 left-4 z-50 flex flex-col gap-4 w-72",
+    "roll_history": "absolute right-4 top-4 bottom-4 z-50 w-64 flex flex-col gap-3 overflow-y-auto pr-2",
+    "general_padding": "p-4 sm:p-6 lg:p-8",
+    "border_radius": "rounded-md"
+  },
+  "components": {
+    "card": {
+      "structure": "Draggable absolute component. Width 280px. Backdrop blur, solid inner background.",
+      "frame": "2px solid border mapping to faction color. Soft inner and outer glow based on faction color.",
+      "header": "Top-left: Character name (Cormorant Garamond). Top-right: Action icons (duplicate, scale, edit, rotate, delete) using subtle hover effects.",
+      "image": "Central character image, 16:9 or square cropped, subtle sepia or dark overlay.",
+      "body": "Numeric parameters grid (Armor, Stamina, Melee, Ranged, Attacks/Defenses, Focus). Uses +/- steppers.",
+      "death_state": "If Stamina reaches 0, apply grayscale filter and drop opacity."
+    },
+    "main_menu": {
+      "style": "Glassmorphism panel (backdrop-blur-xl bg-black/60) with 1px border-white/10. Vertical list of distinct buttons.",
+      "buttons": "Hover translates slightly right (translate-x-1), text color brightens. Include icons for 'Crear carta', 'Biblioteca', 'Guardar', 'Cargar', etc."
+    },
+    "dice_roller": {
+      "style": "Neumorphic/Tactile dark containers. Three distinct sections: Attack, Initiative, Action.",
+      "controls": "Quantity selectors (numeric input or +/-). Large 'Roll' button with deep red or brass accent."
+    },
+    "roll_history_square": {
+      "style": "Uses 'wooden_dice_square' as background-image. Size: 48px by 48px (enlarged for latest roll).",
+      "text": "Centered number, bold Alegreya Sans, color mapped to dice logic (Green/Red/Purple/Neutral) with heavy text-shadow for readability."
+    }
+  },
+  "motion_and_interactions": {
+    "dice_roll": "Shake animation on button click. Small particle burst or flash when result appears.",
+    "card_drag": "Scale up slightly (scale-105) and increase shadow while dragging. Snap back on drop.",
+    "roll_history_entry": "Slide in from the right (translate-x-full to 0) with slight bounce."
+  },
+  "media": {
+    "image_urls": {
+      "board_background": {
+        "url": "https://static.prod-images.emergentagent.com/jobs/19306555-751c-4468-8aac-7a941afe5487/images/0515e0b800af2624c9c222af71f0e7ef84275a805fcbcacd0319a0a2b3288e8b.png",
+        "category": "board",
+        "description": "Dark fantasy tabletop game board background, obsidian table surface, scattered parchment edges, cinematic."
+      },
+      "wooden_dice_square": {
+        "url": "https://static.prod-images.emergentagent.com/jobs/19306555-751c-4468-8aac-7a941afe5487/images/b787ed5a649e4c9ff5f1b73e5ed5941d556531ee677425410b3541c77adbd818.png",
+        "category": "texture",
+        "description": "High quality dark fantasy wooden square block for roll history backgrounds."
+      },
+      "character_portrait_placeholder_1": {
+        "url": "https://images.pexels.com/photos/29100705/pexels-photo-29100705.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "category": "card_image",
+        "description": "Fantasy portrait featuring a person with gold horns and striking makeup."
+      },
+      "character_portrait_placeholder_2": {
+        "url": "https://images.pexels.com/photos/35989571/pexels-photo-35989571.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "category": "card_image",
+        "description": "Portrait of a mystical character with green hair and elf ears."
+      }
+    }
+  },
+  "instructions_to_main_agent": [
+    "Use react-draggable for the character cards inside the main board area.",
+    "Implement the 5 faction colors explicitly as border and shadow colors for the cards.",
+    "Build the wooden square for roll history by setting the 'wooden_dice_square' image as a background with 'bg-cover bg-center' on a div, then place the roll text inside with appropriate dice roll color and heavy text-shadow.",
+    "Use standard Lucide React icons for all UI elements like Edit, Delete, Rotate, etc.",
+    "Ensure background transparency/opacity is handled carefully so this can look good as an OBS overlay (use dark translucent glassmorphism).",
+    "Keep 'Cormorant Garamond' strictly for headers/names and 'Alegreya Sans' for numbers/UI text.",
+    "Add 'data-testid' to all interactive elements for robust testing."
+  ]
+}
