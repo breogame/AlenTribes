@@ -9,10 +9,11 @@ from starlette.middleware.cors import CORSMiddleware
 import os
 import json
 import uuid
+import asyncio
 import logging
 import secrets
 from pathlib import Path
-from typing import Dict, Set, Any
+from typing import Dict, Any
 from datetime import datetime, timezone
 
 ROOT_DIR = Path(__file__).parent
@@ -23,6 +24,10 @@ api_router = APIRouter(prefix="/api")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
+# Cleanup config
+CLEANUP_INTERVAL_SECONDS = int(os.environ.get("ROOM_CLEANUP_INTERVAL", 5 * 60))
+ROOM_TTL_SECONDS = int(os.environ.get("ROOM_TTL_SECONDS", 30 * 60))
 
 
 # ---------------------------------------------------------------------------
@@ -47,6 +52,10 @@ class Room:
         self.name = name
         self.state: Dict[str, Any] = _default_state()
         self.clients: Dict[WebSocket, Dict[str, Any]] = {}  # ws -> {name, isGM}
+        self.last_activity: datetime = datetime.now(timezone.utc)
+
+    def touch(self) -> None:
+        self.last_activity = datetime.now(timezone.utc)
 
     def serialize_state(self) -> Dict[str, Any]:
         return {
@@ -55,6 +64,7 @@ class Room:
             "users": [
                 {"name": info["name"], "isGM": info["isGM"]}
                 for info in self.clients.values()
+                if not info.get("isOverlay")
             ],
             "roomName": self.name,
         }
@@ -244,7 +254,9 @@ async def websocket_room(ws: WebSocket, token: str):
 
     name = (join.get("name") or "Invitado")[:40]
     is_gm = bool(join.get("gmSecret") and join.get("gmSecret") == room.gm_secret)
-    room.clients[ws] = {"name": name, "isGM": is_gm}
+    is_overlay = bool(join.get("overlay"))
+    room.clients[ws] = {"name": name, "isGM": is_gm, "isOverlay": is_overlay}
+    room.touch()
 
     # Send initial state
     await ws.send_text(json.dumps({
@@ -270,6 +282,7 @@ async def websocket_room(ws: WebSocket, token: str):
 
             changed = _apply_action(room, msg, name)
             if changed:
+                room.touch()
                 # For card moves, we could broadcast only a light payload, but for
                 # simplicity we broadcast full state (it's small).
                 await broadcast(room, room.serialize_state())
@@ -296,3 +309,29 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+async def _cleanup_loop():
+    """Periodically remove empty rooms that have been inactive for ROOM_TTL_SECONDS."""
+    while True:
+        try:
+            await asyncio.sleep(CLEANUP_INTERVAL_SECONDS)
+            now = datetime.now(timezone.utc)
+            stale = []
+            for token, room in list(ROOMS.items()):
+                if not room.clients:
+                    age = (now - room.last_activity).total_seconds()
+                    if age > ROOM_TTL_SECONDS:
+                        stale.append(token)
+            for t in stale:
+                ROOMS.pop(t, None)
+                logger.info(f"Cleaned up inactive room {t}")
+        except asyncio.CancelledError:
+            break
+        except Exception as e:
+            logger.warning(f"cleanup loop error: {e}")
+
+
+@app.on_event("startup")
+async def _start_cleanup():
+    asyncio.create_task(_cleanup_loop())

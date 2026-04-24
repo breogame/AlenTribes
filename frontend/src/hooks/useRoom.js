@@ -7,7 +7,7 @@ function wsUrl(token) {
   return `${wsBase}/api/ws/${token}`;
 }
 
-export function useRoom({ token, name, gmSecret }) {
+export function useRoom({ token, name, gmSecret, joinExtras }) {
   const [state, setState] = useState(null);
   const [you, setYou] = useState(null);
   const [users, setUsers] = useState([]);
@@ -36,7 +36,12 @@ export function useRoom({ token, name, gmSecret }) {
 
       ws.onopen = () => {
         setStatus('open');
-        ws.send(JSON.stringify({ type: 'JOIN', name, gmSecret: gmSecret || null }));
+        ws.send(JSON.stringify({
+          type: 'JOIN',
+          name,
+          gmSecret: gmSecret || null,
+          ...(joinExtras || {}),
+        }));
       };
 
       ws.onmessage = (evt) => {
@@ -77,6 +82,7 @@ export function useRoom({ token, name, gmSecret }) {
         try { wsRef.current.close(); } catch { /* ignore */ }
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, name, gmSecret]);
 
   return { state, you, users, roomName, status, error, send };

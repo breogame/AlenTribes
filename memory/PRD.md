@@ -70,6 +70,20 @@ reglas de colores de dados específicas (D6/D12 y iniciativa=D3).
   (obsidiana + latón + carmesí)
 - data-testid en todos los elementos interactivos
 
+## Implementado (Apr 2026) ✅
+- **Modo Overlay para OBS**: ruta `/room/{token}/overlay` — vista de solo lectura
+  (tablero + historial, sin menú ni edición). Soporta `?transparent=1` para fondo
+  transparente (ideal como fuente de navegador con overlay en OBS) y `?noHistory=1`
+  para ocultar el historial.
+- **Música ambiente**: panel flotante togglable (bottom-left centro) con dos fuentes:
+  - Archivo local (mp3/wav) con play/pause, volumen, mute y loop
+  - Spotify (track / playlist / álbum): parser de URL oficial → embed iframe nativo
+- **Cleanup automático de salas**: task asyncio de fondo revisa cada 5 min y elimina
+  salas con 0 usuarios conectados e inactividad > 30 min. Configurable vía
+  `ROOM_CLEANUP_INTERVAL` y `ROOM_TTL_SECONDS` en .env.
+- **Overlay no cuenta como usuario**: el flag `overlay: true` en el mensaje JOIN
+  hace que el cliente no aparezca en el contador de usuarios del GM.
+
 ## Tests
 - Backend: 17/17 pytest (REST + WebSocket, todas las acciones, GM auth, permisos)
 - Frontend: Playwright end-to-end (landing → GM room → create card → dice roll → 2nd

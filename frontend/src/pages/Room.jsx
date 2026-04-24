@@ -12,6 +12,7 @@ import DiceSettingsModal from '@/components/DiceSettingsModal';
 import ShareLinkDialog from '@/components/ShareLinkDialog';
 import InfoDialog from '@/components/InfoDialog';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import MusicPanel from '@/components/MusicPanel';
 import { computeDerived, newCardTemplate, clampCardPatch, strippedTemplateFromCard } from '@/lib/cardUtils';
 import { performRoll } from '@/lib/diceLogic';
 import { playDiceSound } from '@/lib/diceSound';
@@ -38,6 +39,7 @@ export default function Room() {
   const [infoText, setInfoText] = useState(null);
   const [confirmDel, setConfirmDel] = useState(null); // {id, name}
   const [lastRollAt, setLastRollAt] = useState(0);
+  const [musicVisible, setMusicVisible] = useState(false);
 
   // Resolve stored GM credentials / player name on mount
   useEffect(() => {
@@ -293,6 +295,9 @@ export default function Room() {
           onClearBoard={clearBoard}
           onChangeBackground={setBackground}
           onShareLink={() => setShowShare(true)}
+          onOpenOverlay={() => window.open(`/room/${token}/overlay`, '_blank', 'noopener,noreferrer')}
+          onToggleMusic={() => setMusicVisible((v) => !v)}
+          musicVisible={musicVisible}
         />
       )}
 
@@ -313,6 +318,9 @@ export default function Room() {
           onClear={clearHistory}
         />
       )}
+
+      {/* Music panel (GM only, bottom center-left area) */}
+      {myName && isGM && musicVisible && <MusicPanel />}
 
       {/* Modals */}
       {showJoin && (

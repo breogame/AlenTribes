@@ -46,7 +46,7 @@ function StatRow({ label, children }) {
 }
 
 export default function CharacterCard({
-  card, derived, globalScale, isGM,
+  card, derived, globalScale, isGM, isOverlay,
   onPatch, onMove, onDuplicate, onEdit, onRotate, onDelete, onInfo,
   onAttack, onInitiative, onScaleUp, onScaleDown,
 }) {
@@ -203,21 +203,23 @@ export default function CharacterCard({
           )}
 
           {/* Info button centered */}
-          <button
-            className="icon-btn"
-            onClick={onInfo}
-            title="Información"
-            data-testid={`card-info-${card.id}`}
-            style={{
-              position: 'absolute',
-              right: 8, bottom: 8,
-              background: 'rgba(0,0,0,0.7)',
-              borderColor: 'rgba(184,134,11,0.4)',
-              color: '#f3d58c',
-            }}
-          >
-            <Info size={13} />
-          </button>
+          {!isOverlay && (
+            <button
+              className="icon-btn"
+              onClick={onInfo}
+              title="Información"
+              data-testid={`card-info-${card.id}`}
+              style={{
+                position: 'absolute',
+                right: 8, bottom: 8,
+                background: 'rgba(0,0,0,0.7)',
+                borderColor: 'rgba(184,134,11,0.4)',
+                color: '#f3d58c',
+              }}
+            >
+              <Info size={13} />
+            </button>
+          )}
 
           {/* Mode toggle (only GM) */}
           {isGM && (
