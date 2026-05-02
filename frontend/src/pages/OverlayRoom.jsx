@@ -37,10 +37,13 @@ export default function OverlayRoom() {
   const history = state?.history || [];
   const globalScale = state?.scale || 1;
   const background = state?.background || DEFAULT_BG;
+  const backgroundShade = state?.backgroundShade ?? 55;
 
   const bgStyle = useMemo(
-    () => (transparent ? { display: 'none' } : { backgroundImage: `url(${background})` }),
-    [background, transparent]
+    () => (transparent
+      ? { display: 'none' }
+      : { backgroundImage: `url(${background})`, '--bg-shade': backgroundShade / 100 }),
+    [background, backgroundShade, transparent]
   );
 
   return (

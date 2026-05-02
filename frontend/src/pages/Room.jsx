@@ -89,6 +89,7 @@ export default function Room() {
   const diceType = state?.diceType || 6;
   const globalScale = state?.scale || 1;
   const background = state?.background || DEFAULT_BG;
+  const backgroundShade = state?.backgroundShade ?? 55;
 
   // --- Actions (only available when GM, except dice rolls) ---
   function createCard(cardData) {
@@ -184,6 +185,10 @@ export default function Room() {
     send({ type: 'BG_SET', payload: { background: dataUrl } });
   }
 
+  function setBackgroundShade(shade) {
+    send({ type: 'BG_SHADE_SET', payload: { shade } });
+  }
+
   function clearHistory() {
     send({ type: 'HISTORY_CLEAR', payload: {} });
   }
@@ -236,7 +241,8 @@ export default function Room() {
 
   const bgStyle = useMemo(() => ({
     backgroundImage: `url(${background})`,
-  }), [background]);
+    '--bg-shade': backgroundShade / 100,
+  }), [background, backgroundShade]);
 
   return (
     <div className="board-root no-select" data-testid="board-root">
@@ -287,6 +293,8 @@ export default function Room() {
           onScaleReset={() => setScale(1.0)}
           onClearBoard={clearBoard}
           onChangeBackground={setBackground}
+          backgroundShade={backgroundShade}
+          onChangeBackgroundShade={setBackgroundShade}
           onShareLink={() => setShowShare(true)}
           onOpenOverlay={() => window.open(`/room/${token}/overlay`, '_blank', 'noopener,noreferrer')}
         />

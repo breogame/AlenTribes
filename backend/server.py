@@ -214,6 +214,11 @@ def _apply_action(room: Room, action: Dict[str, Any], sender_name: str) -> bool:
         state["background"] = payload.get("background")
         return True
 
+    elif atype == "BG_SHADE_SET":
+        shade = int(payload.get("shade") or 0)
+        state["backgroundShade"] = max(0, min(100, shade))
+        return True
+
     elif atype == "DICE_TYPE_SET":
         dt = int(payload.get("diceType") or 6)
         if dt in (6, 12):

@@ -20,9 +20,11 @@
   content: '';
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(ellipse at center, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.7) 100%),
-    linear-gradient(180deg, rgba(15, 15, 18, 0.4) 0%, rgba(15, 15, 18, 0.7) 100%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, calc(var(--bg-shade, 0.55) * 0.7)) 0%,
+    rgba(0, 0, 0, var(--bg-shade, 0.55)) 100%
+  );
   pointer-events: none;
 }
 
