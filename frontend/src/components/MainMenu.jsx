@@ -1,14 +1,14 @@
 import { useRef } from 'react';
 import {
   Plus, Library, Save, Upload, Dice6, ZoomIn, ZoomOut, RotateCcw,
-  Trash2, Image as ImageIcon, Share2, Music, MonitorPlay,
+  Trash2, Image as ImageIcon, Share2, MonitorPlay,
 } from 'lucide-react';
 
 export default function MainMenu({
   isGM, roomName, users, diceType, soundOn, globalScale, status,
   onCreateCard, onOpenLibrary, onSave, onLoadFile, onOpenDiceSettings,
   onScaleUp, onScaleDown, onScaleReset, onClearBoard, onChangeBackground,
-  onShareLink, onOpenOverlay, onToggleMusic, musicVisible,
+  onShareLink, onOpenOverlay,
 }) {
   const fileInputRef = useRef(null);
   const bgInputRef = useRef(null);
@@ -125,9 +125,6 @@ export default function MainMenu({
           </button>
           <button className="menu-btn" onClick={onOpenOverlay} data-testid="menu-overlay">
             <MonitorPlay size={16} /> Abrir overlay OBS
-          </button>
-          <button className="menu-btn" onClick={onToggleMusic} data-testid="menu-music">
-            <Music size={16} /> {musicVisible ? 'Ocultar música' : 'Mostrar música'}
           </button>
           <button className="menu-btn" onClick={onClearBoard} data-testid="menu-clear" style={{ color: '#f58585' }}>
             <Trash2 size={16} /> Limpiar tablero

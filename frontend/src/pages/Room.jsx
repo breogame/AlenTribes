@@ -39,7 +39,6 @@ export default function Room() {
   const [infoText, setInfoText] = useState(null);
   const [confirmDel, setConfirmDel] = useState(null); // {id, name}
   const [lastRollAt, setLastRollAt] = useState(0);
-  const [musicVisible, setMusicVisible] = useState(false);
 
   // Resolve stored GM credentials / player name on mount
   useEffect(() => {
@@ -290,8 +289,6 @@ export default function Room() {
           onChangeBackground={setBackground}
           onShareLink={() => setShowShare(true)}
           onOpenOverlay={() => window.open(`/room/${token}/overlay`, '_blank', 'noopener,noreferrer')}
-          onToggleMusic={() => setMusicVisible((v) => !v)}
-          musicVisible={musicVisible}
         />
       )}
 
@@ -313,8 +310,8 @@ export default function Room() {
         />
       )}
 
-      {/* Music panel (GM only, bottom center-left area) */}
-      {myName && isGM && musicVisible && <MusicPanel />}
+      {/* Music panel (GM only, persistent so tracks are not lost) */}
+      {myName && isGM && <MusicPanel />}
 
       {/* Modals */}
       {showJoin && (
