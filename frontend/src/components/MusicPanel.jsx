@@ -69,22 +69,6 @@ export default function MusicPanel() {
     }
   }, [volume, muted]);
 
-  // Attach time/duration listeners once.
-  useEffect(() => {
-    const el = audioRef.current;
-    if (!el) return undefined;
-    const onTime = () => setCurrentTime(el.currentTime || 0);
-    const onMeta = () => setDuration(Number.isFinite(el.duration) ? el.duration : 0);
-    el.addEventListener('timeupdate', onTime);
-    el.addEventListener('loadedmetadata', onMeta);
-    el.addEventListener('durationchange', onMeta);
-    return () => {
-      el.removeEventListener('timeupdate', onTime);
-      el.removeEventListener('loadedmetadata', onMeta);
-      el.removeEventListener('durationchange', onMeta);
-    };
-  }, []);
-
   // Auto-play when active track changes.
   useEffect(() => {
     if (activeIndex < 0 || !audioRef.current) return undefined;
@@ -240,6 +224,24 @@ export default function MusicPanel() {
         }}
         data-testid="music-panel-root"
       >
+        {/* Audio element is always mounted so playback and time tracking
+            keep working even when the panel is collapsed. */}
+        <audio
+          ref={audioRef}
+          src={activeTrack?.url || undefined}
+          onEnded={onEnded}
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime || 0)}
+          onLoadedMetadata={(e) => setDuration(
+            Number.isFinite(e.currentTarget.duration) ? e.currentTarget.duration : 0
+          )}
+          onDurationChange={(e) => setDuration(
+            Number.isFinite(e.currentTarget.duration) ? e.currentTarget.duration : 0
+          )}
+          data-testid="music-audio"
+        />
+
         {!expanded ? (
           <div
             className="panel-glass flex items-center"
@@ -375,15 +377,6 @@ export default function MusicPanel() {
                       </button>
                     )}
                   </div>
-
-                  <audio
-                    ref={audioRef}
-                    src={activeTrack?.url || undefined}
-                    onEnded={onEnded}
-                    onPlay={() => setPlaying(true)}
-                    onPause={() => setPlaying(false)}
-                    data-testid="music-audio"
-                  />
 
                   {/* Playlist */}
                   <div
