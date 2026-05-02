@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import Draggable from 'react-draggable';
 import {
-  Copy, Edit3, ZoomIn, ZoomOut, RotateCw, Trash2, Info, Swords, Crosshair, Shield, Plus, Minus,
+  Copy, Edit3, RotateCw, Trash2, Info, Swords, Crosshair, Shield, Plus, Minus,
 } from 'lucide-react';
 import { factionColor } from '@/lib/cardUtils';
 
@@ -48,7 +48,7 @@ function StatRow({ label, children }) {
 export default function CharacterCard({
   card, derived, globalScale, isGM, isOverlay,
   onPatch, onMove, onDuplicate, onEdit, onRotate, onDelete, onInfo,
-  onAttack, onInitiative, onScaleUp, onScaleDown,
+  onAttack, onInitiative,
 }) {
   const nodeRef = useRef(null);
   const [dragging, setDragging] = useState(false);
@@ -90,16 +90,20 @@ export default function CharacterCard({
     >
       <div
         ref={nodeRef}
-        className={`card-frame ${derived.isDead ? 'is-dead' : ''} ${dragging ? 'is-dragging' : ''}`}
         style={{
           position: 'absolute',
           width: 280,
-          '--faction-color': factionHex,
-          transform: `scale(${cardScale}) rotate(${rotation}deg)`,
-          transformOrigin: 'top left',
         }}
         data-testid={`card-${card.id}`}
       >
+        <div
+          className={`card-frame ${derived.isDead ? 'is-dead' : ''} ${dragging ? 'is-dragging' : ''}`}
+          style={{
+            '--faction-color': factionHex,
+            transform: `scale(${cardScale}) rotate(${rotation}deg)`,
+            transformOrigin: 'top left',
+          }}
+        >
         {/* Header */}
         <div
           className="card-drag-handle flex items-center justify-between"
@@ -128,12 +132,6 @@ export default function CharacterCard({
               <>
                 <button className="icon-btn" onClick={onDuplicate} title="Duplicar" data-testid={`card-dup-${card.id}`}>
                   <Copy size={12} />
-                </button>
-                <button className="icon-btn" onClick={onScaleUp} title="Ampliar" data-testid={`card-scaleup-${card.id}`}>
-                  <ZoomIn size={12} />
-                </button>
-                <button className="icon-btn" onClick={onScaleDown} title="Reducir" data-testid={`card-scaledown-${card.id}`}>
-                  <ZoomOut size={12} />
                 </button>
                 <button className="icon-btn" onClick={onEdit} title="Editar" data-testid={`card-edit-${card.id}`}>
                   <Edit3 size={12} />
@@ -433,6 +431,7 @@ export default function CharacterCard({
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </Draggable>

@@ -70,8 +70,6 @@ export default function OverlayRoom() {
             onInfo={() => {}}
             onAttack={() => {}}
             onInitiative={() => {}}
-            onScaleUp={() => {}}
-            onScaleDown={() => {}}
           />
         ))}
       </div>

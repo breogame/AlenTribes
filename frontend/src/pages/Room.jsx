@@ -264,12 +264,6 @@ export default function Room() {
             onInfo={() => setInfoText({ title: card.name, text: card.description })}
             onAttack={() => rollAttackFromCard(card)}
             onInitiative={() => rollInitiativeFromCard(card)}
-            onScaleUp={() =>
-              patchCard(card.id, { scale: Math.min(2.2, (card.scale || 1) + 0.1) })
-            }
-            onScaleDown={() =>
-              patchCard(card.id, { scale: Math.max(0.5, (card.scale || 1) - 0.1) })
-            }
           />
         ))}
       </div>
