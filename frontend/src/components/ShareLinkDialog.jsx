@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react';
-import { X, Copy, Check } from 'lucide-react';
+import { X, Copy, Check, Cloud } from 'lucide-react';
 
-export default function ShareLinkDialog({ token, onClose }) {
+export default function ShareLinkDialog({ token, apiParam, onClose }) {
   const [copied, setCopied] = useState(false);
-  const link = useMemo(() => `${window.location.origin}/room/${token}`, [token]);
+  const link = useMemo(() => {
+    const base = `${window.location.origin}/room/${token}`;
+    return apiParam ? `${base}?api=${apiParam}` : base;
+  }, [token, apiParam]);
 
   async function copy() {
     try {
@@ -54,6 +57,14 @@ export default function ShareLinkDialog({ token, onClose }) {
 
         <div className="text-xs mt-4" style={{ color: 'var(--text-muted)' }}>
           Código de sala: <strong style={{ color: '#e8cd8c' }}>{token}</strong>
+          {apiParam === 'cloud' && (
+            <span
+              style={{ marginLeft: 10, color: '#bfe3ff', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+              data-testid="share-cloud-badge"
+            >
+              <Cloud size={11} /> Cloud
+            </span>
+          )}
         </div>
       </div>
     </div>

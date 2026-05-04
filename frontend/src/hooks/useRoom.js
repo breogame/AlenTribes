@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { LOCAL_BACKEND_URL } from '@/lib/backend';
 
-// Builds a wss:// URL from the REACT_APP_BACKEND_URL.
-function wsUrl(token) {
-  const base = process.env.REACT_APP_BACKEND_URL || '';
+// Builds a wss:// URL from a base HTTP URL.
+function wsUrl(baseUrl, token) {
+  const base = baseUrl || LOCAL_BACKEND_URL || '';
   const wsBase = base.replace(/^http/, 'ws');
   return `${wsBase}/api/ws/${token}`;
 }
 
-export function useRoom({ token, name, gmSecret, joinExtras }) {
+export function useRoom({ token, name, gmSecret, joinExtras, apiUrl }) {
   const [state, setState] = useState(null);
   const [you, setYou] = useState(null);
   const [users, setUsers] = useState([]);
@@ -30,7 +31,7 @@ export function useRoom({ token, name, gmSecret, joinExtras }) {
     let retryTimer;
 
     function connect() {
-      const ws = new WebSocket(wsUrl(token));
+      const ws = new WebSocket(wsUrl(apiUrl, token));
       wsRef.current = ws;
       setStatus('connecting');
 
@@ -83,7 +84,7 @@ export function useRoom({ token, name, gmSecret, joinExtras }) {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, name, gmSecret]);
+  }, [token, name, gmSecret, apiUrl]);
 
   return { state, you, users, roomName, status, error, send };
 }

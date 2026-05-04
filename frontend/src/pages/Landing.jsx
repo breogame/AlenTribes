@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Dices, ScrollText, Users } from 'lucide-react';
+import { Dices, ScrollText, Users, Cloud } from 'lucide-react';
 import { toast } from 'sonner';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+import { LOCAL_BACKEND_URL, CLOUD_BACKEND_URL } from '@/lib/backend';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -16,22 +15,31 @@ export default function Landing() {
     document.title = 'Tablero de Rol · Streaming';
   }, []);
 
-  async function createRoom() {
+  async function createRoom(apiSource) {
     if (loading) return;
     setLoading(true);
+    const backendUrl = apiSource === 'cloud' ? CLOUD_BACKEND_URL : LOCAL_BACKEND_URL;
     try {
-      const { data } = await axios.post(`${BACKEND_URL}/api/room/create`, {
+      const { data } = await axios.post(`${backendUrl}/api/room/create`, {
         name: roomName || 'Partida de rol',
       });
       // persist GM credentials for this room locally
       localStorage.setItem(
         `rsb:gm:${data.token}`,
-        JSON.stringify({ gmSecret: data.gmSecret, name: 'Game Master' })
+        JSON.stringify({
+          gmSecret: data.gmSecret,
+          name: 'Game Master',
+          apiSource: apiSource || 'local',
+        })
       );
-      toast.success('Sala creada');
-      navigate(`/room/${data.token}?gm=1`);
+      toast.success(apiSource === 'cloud' ? 'Sala cloud creada' : 'Sala creada');
+      const apiQuery = apiSource === 'cloud' ? '&api=cloud' : '';
+      navigate(`/room/${data.token}?gm=1${apiQuery}`);
     } catch (e) {
-      toast.error('No se ha podido crear la sala');
+      const msg = apiSource === 'cloud'
+        ? 'No se ha podido crear la sala cloud. ¿Está el backend accesible?'
+        : 'No se ha podido crear la sala';
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -97,12 +105,25 @@ export default function Landing() {
               maxLength={80}
             />
             <button
-              className="brass-btn w-full"
-              onClick={createRoom}
+              className="brass-btn w-full mb-2"
+              onClick={() => createRoom('local')}
               disabled={loading}
               data-testid="btn-create-room"
             >
               {loading ? 'Creando…' : 'Crear sala'}
+            </button>
+            <button
+              className="ghost-btn w-full flex items-center justify-center gap-2"
+              onClick={() => createRoom('cloud')}
+              disabled={loading}
+              data-testid="btn-create-room-cloud"
+              style={{
+                borderColor: 'rgba(120, 200, 255, 0.3)',
+                color: '#bfe3ff',
+              }}
+              title="Crea la sala en el servidor compartido en la nube"
+            >
+              <Cloud size={15} /> Nueva sesión cloud
             </button>
           </div>
 

@@ -14,6 +14,7 @@ import InfoDialog from '@/components/InfoDialog';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import MusicPanel from '@/components/MusicPanel';
 import { computeDerived, newCardTemplate, clampCardPatch, strippedTemplateFromCard } from '@/lib/cardUtils';
+import { resolveBackendUrl } from '@/lib/backend';
 import { performRoll } from '@/lib/diceLogic';
 import { playDiceSound } from '@/lib/diceSound';
 import { toast } from 'sonner';
@@ -25,6 +26,8 @@ export default function Room() {
   const { token } = useParams();
   const [searchParams] = useSearchParams();
   const isGMParam = searchParams.get('gm') === '1';
+  const apiParam = searchParams.get('api');
+  const apiUrl = resolveBackendUrl(apiParam);
 
   const [gmSecret, setGmSecret] = useState(null);
   const [myName, setMyName] = useState(null);
@@ -82,6 +85,7 @@ export default function Room() {
     token,
     name: myName,
     gmSecret,
+    apiUrl,
   });
 
   const isGM = !!you?.isGM;
@@ -296,7 +300,10 @@ export default function Room() {
           backgroundShade={backgroundShade}
           onChangeBackgroundShade={setBackgroundShade}
           onShareLink={() => setShowShare(true)}
-          onOpenOverlay={() => window.open(`/room/${token}/overlay`, '_blank', 'noopener,noreferrer')}
+          onOpenOverlay={() => {
+            const q = apiParam ? `?api=${apiParam}` : '';
+            window.open(`/room/${token}/overlay${q}`, '_blank', 'noopener,noreferrer');
+          }}
         />
       )}
 
@@ -379,6 +386,7 @@ export default function Room() {
       {showShare && (
         <ShareLinkDialog
           token={token}
+          apiParam={apiParam}
           onClose={() => setShowShare(false)}
         />
       )}

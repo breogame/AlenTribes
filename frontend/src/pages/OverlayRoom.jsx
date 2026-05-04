@@ -4,6 +4,7 @@ import { useRoom } from '@/hooks/useRoom';
 import CharacterCard from '@/components/CharacterCard';
 import RollHistoryPanel from '@/components/RollHistoryPanel';
 import { computeDerived } from '@/lib/cardUtils';
+import { resolveBackendUrl } from '@/lib/backend';
 
 const DEFAULT_BG = 'https://static.prod-images.emergentagent.com/jobs/19306555-751c-4468-8aac-7a941afe5487/images/0515e0b800af2624c9c222af71f0e7ef84275a805fcbcacd0319a0a2b3288e8b.png';
 
@@ -12,12 +13,15 @@ export default function OverlayRoom() {
   const [searchParams] = useSearchParams();
   const transparent = searchParams.get('transparent') === '1';
   const showHistory = searchParams.get('noHistory') !== '1';
+  const apiParam = searchParams.get('api');
+  const apiUrl = resolveBackendUrl(apiParam);
 
   const { state, status } = useRoom({
     token,
     name: 'OBS Overlay',
     gmSecret: null,
     joinExtras: { overlay: true },
+    apiUrl,
   });
 
   useEffect(() => {
