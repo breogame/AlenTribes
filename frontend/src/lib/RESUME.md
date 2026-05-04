@@ -1,0 +1,13 @@
+# RESUME — Librería de utilidades (`/app/frontend/src/lib`)
+
+Funciones puras y utilidades no-React: lógica de dados, utilidades de cartas, sonido sintetizado y resolución de backend.
+
+## Ficheros
+
+| Fichero | Descripción |
+|---|---|
+| `backend.js` | Resuelve la URL del backend según el parámetro `?api=` de la URL. Exporta `LOCAL_BACKEND_URL` (lee `process.env.REACT_APP_BACKEND_URL` en build time), `CLOUD_BACKEND_URL` (URL hardcoded del cloud compartido) y `resolveBackendUrl(apiParam)` que devuelve el URL correcto. Usado por `Landing.jsx`, `Room.jsx`, `OverlayRoom.jsx` y `useRoom.js`. |
+| `cardUtils.js` | Utilidades y constantes relacionadas con cartas: <br>• `FACTION_COLORS` — los 5 bandos con su hex (carmesí, bosque, nocturno, latón, cenizo).<br>• `newCardTemplate({ overrides })` — crea una carta con defaults (stats mínimos, `position: {x:120,y:120}`, `scale:1`, `rotation:0`, `modo:'melee'`).<br>• `strippedTemplateFromCard(card)` — reduce una carta a sus campos de creación (para export YAML y biblioteca).<br>• `computeDerived(card)` — **función clave del negocio**: calcula `wounds = floor((maxAguante - aguante)/(fortaleza+1))`, máximos de reservas CC/AD, flags de aviso en rojo (`aguanteRed`, `reservaCCRed`, `atkDefCCRed`, `focoRed`), nivel de defensa escalonado (1/2/3/4), y `isDead` cuando armadura+aguante=0.<br>• `clampCardPatch(patch)` — asegura mínimos por campo (fortaleza ≥ 1, reservas ≥ 0, etc.) antes de enviar al backend. |
+| `diceLogic.js` | Lógica de los dados:<br>• `performRoll({ type, quantity, diceType })` — lanza N dados y devuelve `{dice, sides, total, type, quantity}`. Iniciativa siempre usa D3 independientemente del tipo seleccionado.<br>• `dieColor(value, type, sides)` — implementa **las reglas de color exactas del enunciado**: acción D6 6=verde; acción D12 1=rojo, 12=morado, 10/11=verde; ataque D6 5/6=verde; ataque D12 1=rojo, 12=morado, 9/10/11=verde; iniciativa siempre neutro.<br>• `colorTokens` — hex de los 4 estados de color.<br>• `rollTypeLabels` — traducción ES ("Acción", "Ataque", "Iniciativa").<br>• `formatTime(iso)` — formato `HH:MM` en español. |
+| `diceSound.js` | Síntesis de sonido de dados via **Web Audio API** (sin archivos externos). Genera ráfagas de ruido filtrado con BiquadFilter (highpass + bandpass ~2.2 kHz) para simular el chasquido de dados cayendo. Se invoca desde `Room.jsx` en cada tirada si el sonido está activo. |
+| `utils.js` | Utilidad del template de shadcn: función `cn(...inputs)` que combina `clsx` + `tailwind-merge` para concatenar clases CSS resolviendo colisiones. Usada internamente por los componentes de `components/ui/`. |
