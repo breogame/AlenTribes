@@ -20,7 +20,7 @@ import { playDiceSound } from '@/lib/diceSound';
 import { toast } from 'sonner';
 import yaml from 'js-yaml';
 
-const DEFAULT_BG = 'https://static.prod-images.emergentagent.com/jobs/19306555-751c-4468-8aac-7a941afe5487/images/0515e0b800af2624c9c222af71f0e7ef84275a805fcbcacd0319a0a2b3288e8b.png';
+const DEFAULT_BG = '/bg-overlay.png';
 
 export default function Room() {
   const { token } = useParams();
