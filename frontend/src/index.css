@@ -141,7 +141,7 @@ body {
 
 /* Roll history square - wooden texture */
 .wood-square {
-  background-image: url('/bg-dice.png');
+  background-image: url('bg-dice.png');
   background-size: cover;
   background-position: center;
   border-radius: 6px;
