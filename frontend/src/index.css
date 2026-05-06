@@ -141,7 +141,7 @@ body {
 
 /* Roll history square - wooden texture */
 .wood-square {
-  background-image: url('https://static.prod-images.emergentagent.com/jobs/19306555-751c-4468-8aac-7a941afe5487/images/b787ed5a649e4c9ff5f1b73e5ed5941d556531ee677425410b3541c77adbd818.png');
+  background-image: url('/bg-dice.png');
   background-size: cover;
   background-position: center;
   border-radius: 6px;
