@@ -15,7 +15,7 @@ function App() {
           <Route path="/room/:token" element={<Room />} />
         </Routes>
       </BrowserRouter>
-      <Toaster theme="dark" position="top-center" richColors />
+      <Toaster theme="dark" position="bottom-right" richColors offset="32px" />
     </div>
   );
 }

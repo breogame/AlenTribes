@@ -210,6 +210,104 @@ body {
   animation: roll-slide-in 320ms cubic-bezier(0.33, 1, 0.68, 1) both;
 }
 
+/* Streaming ribbon (top-center pinned banner shown while transmission is on) */
+@keyframes ribbon-drop {
+  from { opacity: 0; transform: translate(-50%, -120%); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@keyframes ribbon-pulse-red {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.55), 0 0 10px rgba(231, 76, 60, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(231, 76, 60, 0), 0 0 12px rgba(231, 76, 60, 0.65);
+  }
+}
+
+@keyframes ribbon-pulse-amber {
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
+}
+
+.streaming-ribbon {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 80;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.35rem 0.85rem 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f3d58c;
+  background: rgba(14, 10, 6, 0.78);
+  border: 1px solid rgba(184, 134, 11, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.55);
+  animation: ribbon-drop 380ms cubic-bezier(0.33, 1, 0.68, 1) both;
+  user-select: none;
+}
+
+.streaming-ribbon__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.streaming-ribbon__dot--live {
+  background: #e74c3c;
+  animation: ribbon-pulse-red 1.6s ease-out infinite;
+}
+
+.streaming-ribbon__dot--connecting {
+  background: #f0c86c;
+  animation: ribbon-pulse-amber 1.2s ease-in-out infinite;
+}
+
+.streaming-ribbon__dot--idle {
+  background: #6e7178;
+}
+
+.streaming-ribbon__sep {
+  width: 1px;
+  height: 12px;
+  background: rgba(255, 220, 150, 0.18);
+  margin: 0 0.1rem;
+}
+
+.streaming-ribbon__stop {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(231, 76, 60, 0.12);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  color: #f3a59c;
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.streaming-ribbon__stop:hover {
+  background: rgba(231, 76, 60, 0.22);
+  color: #fff;
+  border-color: rgba(231, 76, 60, 0.5);
+}
+
 /* Stepper buttons inside cards */
 .stepper-btn {
   width: 18px;

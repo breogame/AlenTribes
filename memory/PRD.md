@@ -77,21 +77,40 @@ reglas de colores de dados específicas (D6/D12 y iniciativa=D3).
     y se persiste en `localStorage` (`rsb:local-state:<token>`).
   - **No se abre ningún WebSocket** mientras esté OFF — cumple el requisito
     explícito del usuario de evitar tráfico innecesario.
-  - Al activarlo, el GM transmite su estado local mediante una nueva acción
-    `STATE_REPLACE` (GM-only) por WebSocket; el servidor hereda el estado y
-    a partir de ahí sincroniza con jugadores y overlay.
-  - Botones "Compartir enlace" y "Abrir overlay OBS" solo se muestran cuando
+  - Al activarlo, el GM transmite su estado local en el mensaje `JOIN` mediante
+    el campo `initialState` (sólo procesado si el cliente es GM). El servidor
+    aplica ese estado antes de emitir el primer broadcast `STATE`, evitando
+    cualquier parpadeo a "estado por defecto" en la transición OFF→ON.
+  - Se mantiene además la acción `STATE_REPLACE` (GM-only) para re-sembrar
+    el estado manualmente sin desconectar.
+  - Botones "Compartir enlace" y "Abrir overlay OBS" sólo se muestran cuando
     la retransmisión está activa.
-  - Indicador de estado en el header: gris ("local") / amarillo ("conectando")
-    / verde ("en vivo") / rojo ("sin conexión").
+  - Indicador de estado en el header del menú: gris ("local") / amarillo
+    ("conectando") / verde ("en vivo") / rojo ("sin conexión").
+- **Ribbon de retransmisión** (`StreamingRibbon.jsx`):
+  - Banner pinned-top centrado, glassmorphism dorado, sólo visible cuando la
+    retransmisión está activa.
+  - Punto pulsante rojo en "En vivo", ámbar en "Conectando…", gris en "Sin
+    conexión".
+  - Contador de espectadores (excluye al GM).
+  - Botón "Detener" integrado que apaga la retransmisión y vuelve al modo
+    local sin perder el estado.
+  - Animación `ribbon-drop` (entrada) y `ribbon-pulse-red` (punto en vivo).
+- **Refactor del store (un único `state`)**:
+  - `useGameState` ya no envuelve a `useRoom`: ahora gestiona directamente la
+    conexión WebSocket y mantiene una **única** variable de estado, hidratada
+    desde `localStorage` y actualizada tanto por el reducer local (modo OFF)
+    como por los broadcasts `STATE` del servidor (modo ON). Se persiste en
+    `localStorage` en ambos modos.
+  - `useRoom` queda como hook minimal de solo lectura para `OverlayRoom`.
+- **Toaster** movido a `bottom-right` para no colisionar con el ribbon.
 - **Limpieza de dependencias**:
-  - Eliminado `@emergentbase/visual-edits` de `package.json` (devDeps) y del
-    require condicional en `craco.config.js`.
-  - Eliminado `package-lock.json` proveniente del pull; se regeneró
-    `yarn.lock` con `yarn install`.
+  - Eliminado `@emergentbase/visual-edits` de `package.json` y del require
+    condicional en `craco.config.js`.
+  - Eliminado `package-lock.json` proveniente del pull; se regeneró `yarn.lock`
+    con `yarn install`.
 - **Persistencia del nombre de sala en local mode**: `Landing.jsx` ahora guarda
-  `roomName` en `localStorage` junto con las credenciales del GM, para que
-  el menú principal lo muestre correctamente incluso sin WebSocket.
+  `roomName` en `localStorage` junto con las credenciales del GM.
 
 ## Implementado (Apr 2026) ✅
 - **Modo Overlay para OBS**: ruta `/room/{token}/overlay` — vista de solo lectura

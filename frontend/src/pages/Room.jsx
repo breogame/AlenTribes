@@ -13,6 +13,7 @@ import ShareLinkDialog from '@/components/ShareLinkDialog';
 import InfoDialog from '@/components/InfoDialog';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import MusicPanel from '@/components/MusicPanel';
+import StreamingRibbon from '@/components/StreamingRibbon';
 import { computeDerived, newCardTemplate, clampCardPatch, strippedTemplateFromCard } from '@/lib/cardUtils';
 import { resolveBackendUrl } from '@/lib/backend';
 import { performRoll } from '@/lib/diceLogic';
@@ -275,6 +276,18 @@ export default function Room() {
     <div className="board-root no-select" data-testid="board-root">
       <div className="board-bg" style={bgStyle} />
       <div className="grain-overlay" />
+
+      {streamingEnabled && myName && (
+        <StreamingRibbon
+          status={status}
+          userCount={users.length}
+          isGM={isGM}
+          onStop={isGM ? () => {
+            setStreamingEnabled(false);
+            toast.info('Retransmisión detenida · jugando en local');
+          } : null}
+        />
+      )}
 
       <div className="board-surface">
         {cards.map((card) => (

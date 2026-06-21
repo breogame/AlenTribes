@@ -270,6 +270,16 @@ async def websocket_room(ws: WebSocket, token: str):
     name = (join.get("name") or "Invitado")[:40]
     is_gm = bool(join.get("gmSecret") and join.get("gmSecret") == room.gm_secret)
     is_overlay = bool(join.get("overlay"))
+
+    # GM can seed the room state when (re)connecting after a local-only
+    # session. We replace the entire state before sending the first STATE
+    # broadcast so the connecting client never sees a transient default.
+    initial_state = join.get("initialState")
+    if is_gm and isinstance(initial_state, dict):
+        merged = _default_state()
+        merged.update(initial_state)
+        room.state = merged
+
     room.clients[ws] = {"name": name, "isGM": is_gm, "isOverlay": is_overlay}
     room.touch()
 
