@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useGameState } from '@/hooks/useGameState';
+import { usePjDicePoll } from '@/hooks/usePjDicePoll';
 import MainMenu from '@/components/MainMenu';
 import DiceRollerPanel from '@/components/DiceRollerPanel';
 import RollHistoryPanel from '@/components/RollHistoryPanel';
@@ -10,6 +11,7 @@ import CreateCardModal from '@/components/CreateCardModal';
 import LibraryModal from '@/components/LibraryModal';
 import DiceSettingsModal from '@/components/DiceSettingsModal';
 import ShareLinkDialog from '@/components/ShareLinkDialog';
+import PjDiceDialog from '@/components/PjDiceDialog';
 import InfoDialog from '@/components/InfoDialog';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import MusicPanel from '@/components/MusicPanel';
@@ -23,6 +25,7 @@ import yaml from 'js-yaml';
 
 const DEFAULT_BG = '/bg-overlay.png';
 const STREAMING_KEY_PREFIX = 'rsb:streaming:';
+const PJ_DICE_KEY_PREFIX = 'rsb:pj-dice:';
 
 export default function Room() {
   const { token } = useParams();
@@ -60,9 +63,30 @@ export default function Room() {
   const [showLibrary, setShowLibrary] = useState(false);
   const [showDiceSettings, setShowDiceSettings] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [showPjDice, setShowPjDice] = useState(false);
   const [infoText, setInfoText] = useState(null);
   const [confirmDel, setConfirmDel] = useState(null); // {id, name}
   const [lastRollAt, setLastRollAt] = useState(0);
+
+  // PJ dice session: token persisted per room so polling resumes on refresh.
+  const [pjDice, setPjDice] = useState(() => {
+    if (!token) return null;
+    try {
+      const raw = localStorage.getItem(PJ_DICE_KEY_PREFIX + token);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  });
+
+  useEffect(() => {
+    if (!token) return;
+    try {
+      if (pjDice && pjDice.token) {
+        localStorage.setItem(PJ_DICE_KEY_PREFIX + token, JSON.stringify(pjDice));
+      } else {
+        localStorage.removeItem(PJ_DICE_KEY_PREFIX + token);
+      }
+    } catch { /* ignore */ }
+  }, [token, pjDice]);
 
   // Resolve stored GM credentials / player name on mount
   useEffect(() => {
@@ -118,6 +142,25 @@ export default function Room() {
   const globalScale = state?.scale || 1;
   const background = state?.background || DEFAULT_BG;
   const backgroundShade = state?.backgroundShade ?? 55;
+
+  // PJ.html players post rolls to /api/dice/submit. We poll for new rolls
+  // and forward them into the unified history through the same DICE_ROLL
+  // action used by the in-board dice rollers — so they also propagate over
+  // WebSocket when the GM has streaming enabled.
+  const handleExternalRoll = useCallback((roll) => {
+    if (!roll) return;
+    send({ type: 'DICE_ROLL', payload: { roll } });
+    setLastRollAt(Date.now());
+    if (soundOn) playDiceSound();
+    toast.info(`Tirada de ${roll.user || 'PJ'} (${roll.dice?.length || 0}×D${roll.sides || 6})`);
+  }, [send, soundOn]);
+
+  usePjDicePoll({
+    diceToken: pjDice?.token || '',
+    apiUrl,
+    enabled: !!(isGM && pjDice?.token),
+    onRoll: handleExternalRoll,
+  });
 
   // --- Actions (only available when GM, except dice rolls) ---
   function createCard(cardData) {
@@ -352,6 +395,8 @@ export default function Room() {
               return next;
             });
           }}
+          onOpenPjDice={() => setShowPjDice(true)}
+          pjDicePolling={!!(isGM && pjDice?.token)}
         />
       )}
 
@@ -436,6 +481,38 @@ export default function Room() {
           token={token}
           apiParam={apiParam}
           onClose={() => setShowShare(false)}
+        />
+      )}
+
+      {showPjDice && isGM && (
+        <PjDiceDialog
+          diceToken={pjDice?.token || ''}
+          diceSessionName={pjDice?.name || ''}
+          apiUrl={apiUrl}
+          polling={!!(pjDice?.token)}
+          onCreated={(data) => {
+            setPjDice({ token: data.token, name: data.name });
+            toast.success('Token de tiradas PJ creado');
+          }}
+          onRegenerate={async () => {
+            try {
+              const res = await fetch(`${apiUrl}/api/dice/session`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: pjDice?.name || 'Tiradas PJ' }),
+              });
+              const data = await res.json();
+              if (data?.token) {
+                setPjDice({ token: data.token, name: data.name });
+                toast.success('Nuevo token generado');
+              } else {
+                toast.error('No se pudo regenerar el token');
+              }
+            } catch {
+              toast.error('No se pudo regenerar el token');
+            }
+          }}
+          onClose={() => setShowPjDice(false)}
         />
       )}
 

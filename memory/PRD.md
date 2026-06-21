@@ -71,6 +71,32 @@ reglas de colores de dados específicas (D6/D12 y iniciativa=D3).
 - data-testid en todos los elementos interactivos
 
 ## Implementado (Jun 2026) ✅
+- **Tiradas externas desde PJ.html** (independiente de la retransmisión):
+  - Nuevo endpoint REST en backend:
+    - `POST /api/dice/session` → crea sesión, devuelve `{token, name}`.
+    - `POST /api/dice/submit` body `{auth, pj_name, dice_type, dice_result}`
+      → valida token, parsea `d6`/`d12`, valida que cada dado esté en rango
+      y guarda la tirada en un ring buffer (200 últimas).
+    - `GET /api/dice/{token}/rolls?since=<iso>` → lista las tiradas más
+      recientes (newest-first), soporta `since` para polling incremental.
+  - Limpieza de sesiones inactivas integrada en el cleanup loop existente
+    (mismo TTL que las salas).
+  - Nuevo botón en `MainMenu` (solo GM): **"Tiradas PJ"** con indicador
+    `● Activo` cuando el polling está activo.
+  - Nuevo modal `PjDiceDialog.jsx`: auto-genera token al abrirse por primera
+    vez, muestra el token + endpoint + payload de ejemplo, botones de copiar
+    y "Regenerar token".
+  - Token persistido en `localStorage` (`rsb:pj-dice:<roomToken>`) para
+    sobrevivir refrescos.
+  - Hook `usePjDicePoll`: polling cada 3s con cursor `since=<lastSeen>`,
+    invocado únicamente cuando hay token y el usuario es GM.
+  - Las tiradas externas se inyectan como acción `DICE_ROLL` en el store
+    unificado, por lo que aparecen en el historial **incluso con
+    retransmisión apagada**, y se propagan vía WS a los espectadores cuando
+    la retransmisión está activa.
+  - Nuevo tipo de tirada `pj` en `RollHistoryPanel` (etiqueta "PJ").
+
+## Implementado (Jun 2026 — anterior) ✅
 - **Toggle "Habilitar retransmisión"** (GM, por defecto OFF):
   - Cuando OFF, el GM juega 100% local: el estado se gestiona con un reducer
     cliente (`/src/lib/localReducer.js`) que replica `_apply_action` del backend

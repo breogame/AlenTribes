@@ -61,6 +61,7 @@ export const rollTypeLabels = {
   action: 'Acción',
   attack: 'Ataque',
   initiative: 'Iniciativa',
+  pj: 'PJ',
 };
 
 export function formatTime(iso) {

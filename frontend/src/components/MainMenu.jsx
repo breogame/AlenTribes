@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import {
   Plus, Library, Save, Upload, Dice6, ZoomIn, ZoomOut, RotateCcw,
   Trash2, Image as ImageIcon, Share2, MonitorPlay, Minus, ChevronDown,
-  Radio,
+  Radio, Users,
 } from 'lucide-react';
 
 const MIN_KEY = 'rsb:main-menu-min';
@@ -14,6 +14,7 @@ export default function MainMenu({
   backgroundShade, onChangeBackgroundShade,
   onShareLink, onOpenOverlay,
   streamingEnabled, onToggleStreaming,
+  onOpenPjDice, pjDicePolling,
 }) {
   const fileInputRef = useRef(null);
   const bgInputRef = useRef(null);
@@ -192,6 +193,31 @@ export default function MainMenu({
               </button>
 
               <div className="h-px my-2" style={{ background: 'rgba(255,255,255,0.08)' }} />
+
+              <button
+                className="menu-btn"
+                onClick={onOpenPjDice}
+                data-testid="menu-pj-dice"
+                title="Generar / mostrar el token de tiradas para jugadores que usen PJ.html"
+              >
+                <Users size={16} />
+                Tiradas PJ
+                {pjDicePolling && (
+                  <span
+                    style={{
+                      marginLeft: 'auto',
+                      fontSize: '0.62rem',
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      color: '#6ce090',
+                    }}
+                    data-testid="menu-pj-dice-status"
+                    title="Escuchando tiradas externas cada 3s"
+                  >
+                    ● Activo
+                  </span>
+                )}
+              </button>
 
               <button
                 className="menu-btn"

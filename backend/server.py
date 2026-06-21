@@ -74,6 +74,44 @@ ROOMS: Dict[str, Room] = {}
 
 
 # ---------------------------------------------------------------------------
+# Standalone dice sessions (for PJ.html players who roll outside the board)
+# ---------------------------------------------------------------------------
+class DiceSession:
+    """In-memory ring buffer of rolls keyed by a shareable token.
+
+    The GM creates a session, shares the token with the players. PJ.html
+    POSTs rolls to /api/dice/submit and the GM's room polls /rolls.
+    """
+
+    def __init__(self, token: str, name: str):
+        self.token = token
+        self.name = name
+        self.rolls: list[Dict[str, Any]] = []  # newest first
+        self.last_activity: datetime = datetime.now(timezone.utc)
+
+    def append(self, roll: Dict[str, Any]) -> None:
+        self.rolls.insert(0, roll)
+        self.rolls = self.rolls[:200]
+        self.last_activity = datetime.now(timezone.utc)
+
+
+DICE_SESSIONS: Dict[str, DiceSession] = {}
+
+
+def _parse_sides(dice_type: Any) -> int:
+    """Accepts 'd6', 'D12', 6, '6', etc. Returns 6 or 12, defaults to 6."""
+    if isinstance(dice_type, (int, float)):
+        v = int(dice_type)
+    else:
+        s = str(dice_type or "").lower().lstrip("d").strip()
+        try:
+            v = int(s)
+        except ValueError:
+            v = 6
+    return 12 if v == 12 else 6
+
+
+# ---------------------------------------------------------------------------
 # REST endpoints
 # ---------------------------------------------------------------------------
 @api_router.get("/")
@@ -102,6 +140,74 @@ async def room_info(token: str):
         "name": room.name,
         "users": len(room.clients),
     }
+
+
+# ---------------------------------------------------------------------------
+# Dice sessions for external clients (PJ.html)
+# ---------------------------------------------------------------------------
+@api_router.post("/dice/session")
+async def create_dice_session(payload: Dict[str, Any] | None = None):
+    payload = payload or {}
+    name = (payload.get("name") or "Sesión de dados")[:80]
+    token = secrets.token_urlsafe(8)
+    DICE_SESSIONS[token] = DiceSession(token=token, name=name)
+    logger.info(f"Created dice session {token} ('{name}')")
+    return {"token": token, "name": name}
+
+
+@api_router.post("/dice/submit")
+async def submit_dice(payload: Dict[str, Any]):
+    auth = (payload or {}).get("auth")
+    if not auth:
+        raise HTTPException(status_code=400, detail="Falta el token de sesión (auth)")
+    sess = DICE_SESSIONS.get(auth)
+    if not sess:
+        raise HTTPException(status_code=404, detail="Sesión de dados no encontrada")
+
+    pj_name = (payload.get("pj_name") or payload.get("pjName") or "Personaje")[:40]
+    dice_result_raw = payload.get("dice_result") or payload.get("diceResult") or []
+    if not isinstance(dice_result_raw, list) or not dice_result_raw:
+        raise HTTPException(status_code=400, detail="dice_result debe ser una lista no vacía")
+
+    sides = _parse_sides(payload.get("dice_type") or payload.get("diceType"))
+    dice: list[int] = []
+    for v in dice_result_raw:
+        try:
+            n = int(v)
+        except (TypeError, ValueError):
+            continue
+        if 1 <= n <= sides:
+            dice.append(n)
+    if not dice:
+        raise HTTPException(status_code=400, detail="Los resultados deben ser enteros entre 1 y el número de caras")
+
+    roll = {
+        "id": str(uuid.uuid4()),
+        "user": pj_name,
+        "type": "pj",
+        "dice": dice,
+        "sides": sides,
+        "quantity": len(dice),
+        "total": sum(dice),
+        "diceType": sides,
+        "at": datetime.now(timezone.utc).isoformat(),
+        "source": "pj",
+    }
+    sess.append(roll)
+    return {"ok": True, "id": roll["id"], "roll": roll}
+
+
+@api_router.get("/dice/{token}/rolls")
+async def list_dice_rolls(token: str, since: str = "", limit: int = 50):
+    sess = DICE_SESSIONS.get(token)
+    if not sess:
+        raise HTTPException(status_code=404, detail="Sesión de dados no encontrada")
+    sess.last_activity = datetime.now(timezone.utc)
+    if since:
+        rolls = [r for r in sess.rolls if r["at"] > since]
+    else:
+        rolls = sess.rolls[: max(1, min(200, limit))]
+    return {"rolls": rolls, "name": sess.name, "token": sess.token}
 
 
 # ---------------------------------------------------------------------------
@@ -337,20 +443,29 @@ app.add_middleware(
 
 
 async def _cleanup_loop():
-    """Periodically remove empty rooms that have been inactive for ROOM_TTL_SECONDS."""
+    """Periodically remove inactive rooms and dice sessions."""
     while True:
         try:
             await asyncio.sleep(CLEANUP_INTERVAL_SECONDS)
             now = datetime.now(timezone.utc)
-            stale = []
+            stale_rooms = []
             for token, room in list(ROOMS.items()):
                 if not room.clients:
                     age = (now - room.last_activity).total_seconds()
                     if age > ROOM_TTL_SECONDS:
-                        stale.append(token)
-            for t in stale:
+                        stale_rooms.append(token)
+            for t in stale_rooms:
                 ROOMS.pop(t, None)
                 logger.info(f"Cleaned up inactive room {t}")
+
+            stale_dice = []
+            for token, sess in list(DICE_SESSIONS.items()):
+                age = (now - sess.last_activity).total_seconds()
+                if age > ROOM_TTL_SECONDS:
+                    stale_dice.append(token)
+            for t in stale_dice:
+                DICE_SESSIONS.pop(t, None)
+                logger.info(f"Cleaned up inactive dice session {t}")
         except asyncio.CancelledError:
             break
         except Exception as e:
