@@ -82,22 +82,22 @@
   "media": {
     "image_urls": {
       "board_background": {
-        "url": "https://static.prod-images.emergentagent.com/jobs/19306555-751c-4468-8aac-7a941afe5487/images/0515e0b800af2624c9c222af71f0e7ef84275a805fcbcacd0319a0a2b3288e8b.png",
+        "url": "/assets/bg-overlay.png",
         "category": "board",
         "description": "Dark fantasy tabletop game board background, obsidian table surface, scattered parchment edges, cinematic."
       },
       "wooden_dice_square": {
-        "url": "https://static.prod-images.emergentagent.com/jobs/19306555-751c-4468-8aac-7a941afe5487/images/b787ed5a649e4c9ff5f1b73e5ed5941d556531ee677425410b3541c77adbd818.png",
+        "url": "/assets/wooden.png",
         "category": "texture",
         "description": "High quality dark fantasy wooden square block for roll history backgrounds."
       },
       "character_portrait_placeholder_1": {
-        "url": "https://images.pexels.com/photos/29100705/pexels-photo-29100705.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "url": "/assets/archer.jpg",
         "category": "card_image",
         "description": "Fantasy portrait featuring a person with gold horns and striking makeup."
       },
       "character_portrait_placeholder_2": {
-        "url": "https://images.pexels.com/photos/35989571/pexels-photo-35989571.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "url": "/assets/warrior.jpg",
         "category": "card_image",
         "description": "Portrait of a mystical character with green hair and elf ears."
       }

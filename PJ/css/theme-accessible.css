@@ -1,0 +1,564 @@
+/* ============================================================
+   theme-accessible.css — Tribus de Alén
+   Modo de alta accesibilidad visual.
+
+   Criterios aplicados:
+   · Contraste mínimo 4.5:1 (WCAG AA) en todo texto sobre fondo
+   · Tamaño de fuente base aumentado (+2px en etiquetas pequeñas)
+   · Bordes más gruesos y siempre visibles (sin rgba tenues)
+   · No depende exclusivamente del color para transmitir estado:
+     éxito = borde grueso + negrita + ✔, fallo = ✘
+   · Paleta apta para deuteranopia/protanopia (sin rojo/verde puros):
+     éxito → azul claro (#5bc8f5), fallo → naranja (#f5a623)
+   · Fondo neutro oscuro (no negro puro) para reducir fatiga
+   · Foco de teclado siempre visible
+   ============================================================ */
+
+:root {
+    --gold:      #f5d76e;       /* más claro que el original para mayor contraste */
+    --gold-dark: #c9a84c;
+
+    /* Paleta apta para daltonismo (azul/naranja en lugar de verde/rojo) */
+    --color-success:      #5bc8f5;   /* azul cielo — éxito */
+    --color-success-bg:   rgba(91, 200, 245, 0.12);
+    --color-success-glow: rgba(91, 200, 245, 0.45);
+    --color-danger:       #f5a623;   /* naranja — fallo/peligro */
+    --color-danger-alt:   #f5a623;
+    --color-warning:      #f5d76e;   /* amarillo dorado */
+    --color-info:         #a0c4ff;
+
+    /* Tipografía — más legible */
+    --color-text:         #f0ece4;
+    --color-text-muted:   #c8c0b4;   /* +contraste respecto al original #a69e92 */
+    --color-text-dim:     #999;
+    --color-text-label:   #ddd6cc;
+
+    /* Fondos — fondo de pantalla neutro, sin textura */
+    --color-bg-body:      #1a1a1a;
+    --color-bg-sheet:     #242424;
+    --color-bg-navbar:    #0e1015;
+    --color-bg-modal:     #2a2a2a;
+    --color-bg-block:     rgba(0, 0, 0, 0.45);
+    --color-bg-input:     rgba(0, 0, 0, 0.55);
+    --color-bg-item-desc: rgba(30, 24, 14, 0.8);
+    --color-bg-counter:   #403820;
+    --color-bg-counter-h: #5a4e2a;
+    --color-bg-phase:     rgba(35, 28, 16, 0.7);
+    --color-bg-tactical:  #1e1a12;
+
+    /* Bordes — siempre opacos, más gruesos */
+    --color-border:         #c9a84c;
+    --color-border-subtle:  #7a6840;
+    --color-border-faint:   #6a5a30;
+    --color-border-mid:     #8a7440;
+    --color-border-navbar:  #555;
+
+    /* Tipografía base más grande */
+    --font-size-base: 1.1rem;
+}
+
+/* Foco de teclado siempre visible en todo el documento */
+:focus-visible {
+    outline: 3px solid var(--gold) !important;
+    outline-offset: 2px !important;
+}
+
+body {
+    background-color: var(--color-bg-body);
+    background-image: none;     /* sin textura: menos distracción */
+    color: var(--color-text);
+    font-size: var(--font-size-base);
+    line-height: 1.6;
+}
+
+/* ── NAVBAR ── */
+.top-navbar {
+    background: var(--color-bg-navbar);
+    border-bottom: 3px solid var(--gold-dark);
+    box-shadow: none;
+}
+
+.navbar-brand {
+    color: var(--gold);
+    text-shadow: none;
+}
+
+.btn-nav-phase {
+    background: rgba(245, 215, 110, 0.08);
+    color: var(--gold);
+    border-color: var(--gold-dark);
+    text-shadow: none;
+    font-size: 0.9rem;
+}
+
+.btn-nav-phase:hover:not(:disabled) {
+    background: var(--gold-dark);
+    color: #000;
+    text-shadow: none;
+    box-shadow: none;
+}
+
+.btn-nav-phase:disabled {
+    border-color: #555;
+    color: #777;
+    background: transparent;
+}
+
+.btn-nav-icon {
+    background: transparent;
+    border-color: transparent;
+    color: var(--gold);
+}
+
+.btn-nav-icon:hover {
+    background: rgba(245, 215, 110, 0.15);
+    border-color: var(--gold-dark);
+}
+
+.btn-nav-icon.danger:hover {
+    background: rgba(245, 166, 35, 0.2);
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+
+.btn-nav-icon::after {
+    background: #111;
+    border-color: var(--gold-dark);
+    color: var(--gold);
+    font-size: 0.8rem;         /* tooltip más legible */
+}
+
+.navbar-icon-group {
+    border-right-color: var(--color-border-navbar);
+}
+
+/* ── CONTENEDOR ── */
+.sheet-container {
+    background-color: var(--color-bg-sheet);
+    border-color: var(--gold-dark);
+    border-width: 4px;         /* borde más grueso */
+    box-shadow: none;
+}
+
+h1, h3, h4 { color: var(--gold-dark); }
+.game-title { text-shadow: none; }
+
+/* ── PESTAÑAS ── */
+.game-tabs-navigation { border-bottom-color: var(--gold-dark); }
+
+.tab-button {
+    background: #1e1e1e;
+    border-color: var(--color-border-subtle);
+    color: var(--color-text-muted);
+    font-size: 18px;           /* un punto más grande */
+}
+
+.tab-button:hover {
+    color: var(--color-text);
+    background: #2c2c2c;
+}
+
+.tab-button.active {
+    color: var(--color-text);
+    background: #3a3010;
+    border-color: var(--gold-dark);
+    border-bottom-color: #3a3010;
+    border-width: 2px;
+    font-weight: bold;
+    box-shadow: none;
+}
+
+/* ── COMBATE ── */
+.combat-block {
+    background: var(--color-bg-block);
+    border-color: var(--color-border-subtle);
+    border-width: 2px;
+}
+
+.combat-block h3 { border-bottom-color: var(--gold-dark); }
+
+.btn-mode-tab {
+    background: #1a1a1a;
+    border-color: var(--color-border-subtle);
+    color: var(--color-text-muted);
+    font-size: 13px;
+}
+
+.btn-mode-tab.active {
+    background: #3a3010;
+    color: var(--color-text);
+    border-color: var(--gold-dark);
+    border-width: 2px;
+    font-weight: bold;
+    box-shadow: none;
+}
+
+.tactical-pool-card {
+    background: var(--color-bg-tactical);
+    border-color: var(--gold-dark);
+    border-width: 2px;
+    box-shadow: none;
+}
+
+.pool-total-counter {
+    color: var(--color-warning);
+    text-shadow: none;
+    font-size: 3rem;           /* más grande */
+}
+
+.pool-total-counter.incapacitated {
+    color: var(--color-danger);
+    text-shadow: none;
+}
+
+.pool-status-text       { color: var(--color-warning); font-size: 14px;}
+.pool-status-text.ready { color: var(--color-success); font-weight: bold; }
+.pool-status-text.dead  { color: var(--color-danger);  font-weight: bold; }
+
+.defense-level-badge {
+    background: rgba(201, 168, 76, 0.12);
+    border-color: var(--gold-dark);
+    border-style: solid;       /* dashed → solid para mayor visibilidad */
+    border-width: 2px;
+}
+
+.defense-level-badge label { color: var(--color-text-muted); font-size: 12px; }
+
+.defense-level-value {
+    color: var(--color-info);
+    text-shadow: none;
+    font-size: 2.2rem;
+}
+
+.defense-level-desc { color: var(--color-text-label); font-size: 16px; }
+
+.modifiers-breakdown { color: var(--color-text-muted); }
+
+.mod-pill {
+    background: rgba(0,0,0,0.5);
+    border-color: var(--color-border-subtle);
+}
+
+.mod-pill.negative {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+
+.combat-select {
+    background: var(--color-bg-input);
+    border-color: var(--color-border);
+    color: var(--color-text);
+    border-width: 2px;
+    font-size: 1rem;
+}
+
+.combat-select option { background: #222; }
+
+/* ── TEXTAREA ── */
+.free-textarea {
+    background: var(--color-bg-input);
+    border-color: var(--color-border);
+    color: var(--color-text);
+    border-width: 2px;
+    font-size: 1rem;
+}
+
+.free-textarea:focus {
+    outline: 3px solid var(--gold);
+    background: rgba(0, 0, 0, 0.6);
+}
+
+/* ── BANNER DE FASE ── */
+.phase-banner {
+    background: var(--color-bg-phase);
+    border-color: var(--gold-dark);
+    border-width: 2px;
+}
+
+.phase-indicator { color: var(--color-text-muted); font-size: 14px; }
+.points-pool     { color: var(--color-warning); font-size: 20px; }
+
+/* ── CABECERA ── */
+.header-fields {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: var(--color-border-faint);
+    border-width: 2px;
+}
+
+.input-group label { color: var(--color-text-muted); font-size: 16px; }
+
+.input-group input,
+.input-group select {
+    background: var(--color-bg-input);
+    border-color: var(--color-border);
+    color: var(--color-text);
+    border-width: 2px;
+    font-size: 1rem;
+}
+
+.input-group input:focus,
+.input-group select:focus { outline: 3px solid var(--gold); }
+
+/* ── COLUMNAS ── */
+.column {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: var(--color-border-subtle);
+    border-width: 2px;
+}
+
+.column h3 { border-bottom-color: var(--gold-dark); }
+.total-pool { color: var(--color-text-muted); font-size: 12px; }
+
+/* ── CONTADORES ── */
+.row-item { font-size: 16px; }  /* un punto más grande */
+
+.row-item input {
+    background: rgba(0, 0, 0, 0.55);
+    border-color: var(--color-border);
+    color: var(--color-text);
+    border-width: 2px;
+    font-size: 1rem;
+}
+
+.row-item input:disabled {
+    color: var(--color-text);
+    border-color: var(--color-border-subtle);
+}
+
+.sec-box {
+    background: rgba(0, 0, 0, 0.4);
+    border-color: var(--color-border);
+    border-width: 2px;
+}
+
+.sec-box label { color: var(--color-text-muted); font-size: 16px; }
+.sec-box span.display-value { text-shadow: none; font-size: 22px; }
+
+.btn-counter {
+    background: var(--color-bg-counter);
+    border-color: var(--color-border);
+    color: var(--color-text);
+    width: 28px;              /* más grande */
+    height: 28px;
+    font-size: 16px;
+    border-width: 2px;
+}
+
+.btn-counter:hover {
+    background: var(--color-bg-counter-h);
+    color: #fff;
+}
+
+/* ── COLECCIONES ── */
+.collection-header h4 { color: var(--color-text-muted); }
+
+.btn-add {
+    background: var(--color-bg-counter);
+    border-color: var(--color-border);
+    color: var(--color-text);
+    border-width: 2px;
+    font-size: 11px;
+    padding: 4px 10px;
+}
+
+.btn-add:hover:not(:disabled) { background: var(--color-bg-counter-h); }
+
+.btn-add:disabled {
+    background: #1a1a1a;
+    border-color: #555;
+    color: #666;
+}
+
+.item-list {
+    background: rgba(0, 0, 0, 0.4);
+    border-color: var(--color-border-subtle);
+    border-style: solid;      /* dashed → solid */
+    border-width: 2px;
+}
+
+.item-row { border-bottom-color: var(--color-border-faint); font-size: 16px; }
+
+.item-row .item-text { color: var(--color-text); }
+.item-row .item-text:hover {
+    color: var(--gold);
+    text-decoration: underline;
+}
+
+.item-row .actions { color: var(--color-danger); }
+.item-row .actions:hover { color: #ffc04d; }
+
+.item-description-box {
+    background: var(--color-bg-item-desc);
+    border-left-color: var(--gold-dark);
+    border-left-width: 3px;
+    color: var(--color-text-label);
+    font-size: 12px;
+}
+
+/* ── BOTONES DE FASE ── */
+#btn-phase2-start {
+    background: #281e0e;
+    border-color: var(--gold-dark);
+    border-width: 3px;
+    color: var(--color-text-muted);
+    font-size: 15px;
+}
+
+#btn-phase2-start:disabled {
+    background: #1a1a1a;
+    border-color: #555;
+    color: #666;
+    box-shadow: none;
+}
+
+#btn-phase2-start:not(:disabled):hover {
+    color: var(--color-warning);
+    border-color: var(--color-warning);
+    background: #3a2810;
+    box-shadow: none;
+}
+
+#btn-game-start {
+    background: #0e2030;
+    border-color: var(--color-success);
+    color: var(--color-success);
+    border-width: 3px;
+    font-size: 15px;
+    box-shadow: none;
+}
+
+#btn-game-start:hover {
+    background: #163048;
+    box-shadow: none;
+}
+
+/* ── MODAL ── */
+.modal-overlay { background: rgba(0, 0, 0, 0.85); }
+
+.modal-box {
+    background: var(--color-bg-modal);
+    border-color: var(--gold-dark);
+    border-width: 3px;
+    box-shadow: none;
+}
+
+.modal-box input,
+.modal-box textarea,
+.modal-box select {
+    background: var(--color-bg-input);
+    border-color: var(--color-border);
+    color: var(--color-text);
+    border-width: 2px;
+    font-size: 1rem;
+}
+
+.modal-box input:focus,
+.modal-box textarea:focus,
+.modal-box select:focus { outline: 3px solid var(--gold); }
+
+/* ── ALERTAS ── */
+.alert-red { color: var(--color-danger) !important; }
+.alert-red input { border-color: var(--color-danger) !important; color: var(--color-danger) !important; }
+.alert-orange input { border-color: var(--color-warning) !important; color: var(--color-warning) !important; }
+
+/* ── TIRADA DE ATAQUE ── */
+.btn-attack-roll {
+    background: rgba(245, 166, 35, 0.1);
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+    border-width: 2px;
+    font-size: 0.9rem;
+}
+
+.btn-attack-roll:hover {
+    background: rgba(245, 166, 35, 0.2);
+    border-color: #ffc04d;
+}
+
+.attack-modal-pool-display { color: var(--color-text-muted); }
+.attack-modal-pool-display span { color: var(--color-danger); font-size: 1.3rem; }
+.attack-modal-controls label { color: var(--color-text-muted); font-size: 1.3rem; }
+
+.attack-stepper { border-color: var(--color-border); border-width: 2px; }
+
+.attack-stepper button {
+    background: rgba(0,0,0,0.5);
+    color: var(--gold);
+    font-size: 1.2rem;
+}
+
+.attack-stepper button:hover { background: rgba(245,215,110,0.15); }
+
+.attack-stepper span {
+    color: var(--color-text);
+    background: rgba(0,0,0,0.4);
+    font-size: 1.1rem;
+}
+
+#btn-roll-attack {
+    background: rgba(245, 166, 35, 0.1);
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+    border-width: 2px;
+    font-size: 1rem;
+}
+
+#btn-roll-attack:hover {
+    background: rgba(245, 166, 35, 0.2);
+    border-color: #ffc04d;
+}
+
+/* Resultado con icono textual además del color */
+.attack-result-box.hit {
+    border-color: var(--color-success);
+    border-width: 2px;
+    background: var(--color-success-bg);
+    color: var(--color-success);
+    font-weight: bold;
+}
+
+.attack-result-box.miss {
+    border-color: var(--color-danger);
+    border-width: 2px;
+    background: rgba(245, 166, 35, 0.05);
+    color: var(--color-danger);
+}
+
+/* ── TIRADA DE DADOS ── */
+.dice-selectors label  { color: var(--color-text-muted); font-size: 1rem; }
+.dice-pool-info        { color: var(--color-text-muted); font-size: 1rem; }
+.dice-pool-info span   { color: var(--gold); }
+.dice-results-label    { color: var(--color-text-dim); font-size: 1rem; }
+
+#btn-roll-dice {
+    background: rgba(245, 215, 110, 0.08);
+    border-color: var(--gold-dark);
+    color: var(--gold);
+    border-width: 2px;
+    font-size: 1rem;
+}
+
+#btn-roll-dice:hover { background: rgba(245, 215, 110, 0.18); }
+
+.die {
+    border-color: #666;
+    color: #ccc;
+    background: #1e1e1e;
+    font-size: 1.5rem;         /* número más grande en el dado */
+    width: 50px;
+    height: 50px;
+}
+
+.die.success {
+    border-color: var(--color-success);
+    border-width: 3px;
+    color: var(--color-success);
+    background: var(--color-success-bg);
+    box-shadow: 0 0 6px var(--color-success-glow);
+    font-weight: bold;
+}
+
+.dice-summary          { color: var(--color-text-muted); font-size: 0.9rem; }
+.dice-summary .successes-count { color: var(--color-success); font-size: 1.1rem; }
+
+.skill-label-clickable:hover { color: var(--gold); }

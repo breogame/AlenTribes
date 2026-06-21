@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tribus de Alén - Hoja de Personaje</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@500;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link
+        id="theme-stylesheet"
+        rel="stylesheet"
+        href="css/theme-default.css">
+</head>
+<body>
+    <nav class="top-navbar">
+        <div class="navbar-brand">TRIBUS DE ALÉN</div>
+
+        <div class="navbar-actions">
+            <!-- Botones de persistencia -->
+            <div class="navbar-icon-group">
+                <button type="button" class="btn-nav-icon" data-tooltip="Adaptación visual" onclick="toggleTheme()">👁</button>
+                <button type="button" class="btn-nav-icon" data-tooltip="Exportar carta de personaje">🂿</button>
+                <input type="file" id="import-file-input" accept=".yaml,.yml" style="display:none;" onchange="importarPersonaje(event)">
+                <button type="button" class="btn-nav-icon" data-tooltip="Importar personaje" onclick="document.getElementById('import-file-input').click()">📂</button>
+                <button type="button" class="btn-nav-icon" data-tooltip="Exportar personaje" onclick="exportarPersonaje()">💾</button>
+                <button type="button" class="btn-nav-icon danger" data-tooltip="Borrar datos" onclick="resetearPersistencia()">🗑️</button>
+            </div>
+            <!-- Botones de fase -->
+            <button type="button" id="btn-phase2-start" class="btn-nav-phase" onclick="activatePhase2()" disabled>Reparto de Puntos Libres</button>
+            <button type="button" id="btn-game-start" class="btn-nav-phase" onclick="activateGameplayMode()">¡A JUGAR!</button>
+        </div>
+    </nav>
+
+<div class="sheet-container" id="main-sheet-container">
+
+    <div class="game-tabs-navigation" id="game-tabs-menu">
+        <div class="tabs-header">
+            <button type="button" class="tab-button active" onclick="changeTab(event, 'tab-sheet')">Hoja de personaje</button>
+            <button type="button" class="tab-button" onclick="changeTab(event, 'tab-bg')">Trasfondo</button>
+            <button type="button" class="tab-button" onclick="changeTab(event, 'tab-notes')">Notas</button>
+            <button type="button" class="tab-button" onclick="changeTab(event, 'tab-combat')">Combate</button>
+        </div>
+    </div>
+
+    <div id="tab-bg" class="tab-content">
+        <div class="bg-layout">
+
+            <!-- Columna izquierda: imagen de personaje -->
+            <div class="bg-portrait-col">
+                <div class="portrait-drop-zone" id="portrait-drop-zone" onclick="document.getElementById('portrait-file-input').click()">
+                    <img id="portrait-preview" src="" alt="" style="display:none;">
+                    <div class="portrait-placeholder" id="portrait-placeholder">
+                        <span class="portrait-icon">🖼</span>
+                        <span class="portrait-hint">Haz clic o arrastra<br>una imagen</span>
+                    </div>
+                </div>
+                <input type="file" id="portrait-file-input" accept="image/*" style="display:none;" onchange="loadPortrait(event)">
+                <button type="button" class="btn-portrait-remove" id="btn-portrait-remove" style="display:none;" onclick="removePortrait()">✕ Quitar imagen</button>
+            </div>
+
+            <!-- Columna derecha: texto de trasfondo -->
+            <div class="bg-text-col">
+                <textarea id="textarea-bg" class="free-textarea" placeholder="Escribe aquí la historia, origen y trasfondo de tu personaje..."></textarea>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="tab-notes" class="tab-content">
+        <textarea id="textarea-notes" class="free-textarea" placeholder="Anotaciones de la partida, pistas, nombres de PNJs..."></textarea>
+    </div>
+
+    <div id="tab-combat" class="tab-content">
+        <div class="combat-layout">
+            
+            <div class="combat-block">
+                <h3>Acción de Combate</h3>
+                
+                <div class="combat-mode-selector">
+                    <button type="button" id="btn-mode-cc" class="btn-mode-tab active" onclick="switchCombatMode('cc')">Cuerpo a Cuerpo</button>
+                    <button type="button" id="btn-mode-dist" class="btn-mode-tab" onclick="switchCombatMode('dist')">A Distancia</button>
+                </div>
+
+                <div id="combat-content-cc" class="combat-mode-content active">
+                    <div class="row-item">
+                        <label>Seleccionar Arma CC:</label>
+                        <select id="select-weapon-cc" class="combat-select" style="width: 200px;" onchange="calculateCombatPool()"></select>
+                    </div>
+                </div>
+
+                <div id="combat-content-dist" class="combat-mode-content">
+                    <div class="row-item">
+                        <label>Seleccionar Arma Distancia:</label>
+                        <select id="select-weapon-dist" class="combat-select" style="width: 200px;" onchange="calculateCombatPool()"></select>
+                    </div>
+                </div>
+
+                <div class="row-item" style="margin-top: 15px; border-top: 1px solid rgba(140, 118, 77, 0.2); padding-top: 15px;">
+                    <label>Modificador Adicional Situacional:</label>
+                    <div class="stat-interactive-counter">
+                        <button type="button" class="btn-counter" style="display:inline-flex;" onclick="modifyAdditionalMod(-1)">-</button>
+                        <span id="val-combat-mod-additional" class="display-value" style="font-size:16px; min-width:30px;">0</span>
+                        <button type="button" class="btn-counter" style="display:inline-flex;" onclick="modifyAdditionalMod(1)">+</button>
+                    </div>
+                </div>
+
+                <div class="tactical-pool-card">
+                    <h4>Reserva Total de Dados</h4>
+                    <div class="pool-total-counter" id="display-combat-pool-total">0</div>
+                    
+                    <div class="modifiers-breakdown" id="display-pool-breakdown">
+                        <span class="mod-pill">Base: +0</span>
+                        <span class="mod-pill">Arma: +0</span>
+                        <span class="mod-pill">Sit: +0</span>
+                        <span class="mod-pill negative">Daño: -0</span>
+                        <span class="mod-pill negative">Armadura: -0</span>
+                    </div>
+
+                    <div class="pool-status-text" id="display-pool-status">Tienes dados sin asignar</div>
+                    
+                    <div class="tactical-distribution-grid">
+                        <div class="sec-box">
+                            <label>Dados de Ataque</label>
+                            <div class="stat-interactive-counter" style="margin-top:5px;">
+                                <button type="button" class="btn-counter btn-alloc" style="display:inline-flex;" onclick="modifyTacticalAllocation('ataque', -1)">-</button>
+                                <span id="val-allocation-ataque" class="display-value">0</span>
+                                <button type="button" class="btn-counter btn-alloc" style="display:inline-flex;" onclick="modifyTacticalAllocation('ataque', 1)">+</button>
+                            </div>
+                        </div>
+
+                        <div class="sec-box">
+                            <label>Dados de Defensa</label>
+                            <div class="stat-interactive-counter" style="margin-top:5px;">
+                                <button type="button" class="btn-counter btn-alloc" style="display:inline-flex;" onclick="modifyTacticalAllocation('defensa', -1)">-</button>
+                                <span id="val-allocation-defensa" class="display-value">0</span>
+                                <button type="button" class="btn-counter btn-alloc" style="display:inline-flex;" onclick="modifyTacticalAllocation('defensa', 1)">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="defense-level-badge">
+                        <label>Nivel de Defensa del Personaje</label>
+                        <div class="defense-level-value" id="display-defense-level">1</div>
+                        <div class="defense-level-desc" id="display-defense-desc">El rival necesita 1 éxito para impactarte</div>
+                    </div>
+
+                    <div id="weapon-damage-combat-note" style="margin-top:15px; font-size:12px; color:#a69e92; font-style:italic;">Daño del arma activa: None</div>
+                </div>
+            </div>
+            
+            <div class="combat-block" style="display: flex; flex-direction: column; justify-content: flex-start; gap: 15px;">
+                <h3>Estado Vital</h3>
+                
+                <div class="sec-box">
+                    <label>Salud Actual / Máx</label>
+                    <div class="stat-interactive-counter">
+                        <button type="button" class="btn-counter combat-ctrl" onclick="modifyStat('salud', -1)">-</button>
+                        <span id="combat-val-salud" class="display-value">6</span>
+                        <button type="button" class="btn-counter combat-ctrl" onclick="modifyStat('salud', 1)">+</button>
+                    </div>
+                </div>
+
+                <div class="sec-box">
+                    <label>Puntos de Armadura / Máx</label>
+                    <div class="stat-interactive-counter">
+                        <button type="button" class="btn-counter combat-ctrl" onclick="modifyStat('armadura', -1)">-</button>
+                        <span id="combat-val-armadura" class="display-value">0 / 0</span>
+                        <button type="button" class="btn-counter combat-ctrl" onclick="modifyStat('armadura', 1)">+</button>
+                    </div>
+                </div>
+
+                <div class="sec-box">
+                    <label>Foco Actual / Máx</label>
+                    <div class="stat-interactive-counter">
+                        <button type="button" class="btn-counter combat-ctrl" onclick="modifyStat('foco', -1)">-</button>
+                        <span id="combat-val-foco" class="display-value">2</span>
+                        <button type="button" class="btn-counter combat-ctrl" onclick="modifyStat('foco', 1)">+</button>
+                    </div>
+                </div>
+
+                <button type="button" class="btn-attack-roll" onclick="openAttackModal()">⚔ TIRADA DE ATAQUE</button>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="tab-sheet" class="tab-content active">
+
+        <div class="phase-banner" id="phase-banner-node">
+            <div class="phase-indicator" id="phase-text-instruction">FASE 1: Reparte exactamente 10 Atributos, 10 Habilidades y 2 Dotes.</div>
+            <div class="points-pool" id="pool-wrapper">Puntos Libres: <span id="free-points-display">12</span></div>
+        </div>
+
+        <div class="header-fields">
+            <div class="input-group">
+                <label for="name">Nombre</label>
+                <input type="text" id="name" placeholder="Ej. Brennos">
+            </div>
+            <div class="input-group">
+                <label for="concept">Concepto</label>
+                <input type="text" id="concept" placeholder="Ej. Cazador proscrito">
+            </div>
+            <div class="input-group">
+                <label for="nature">Naturaleza</label>
+                <input type="text" id="nature" placeholder="Ej. Indomable">
+            </div>
+        </div>
+
+        <div class="main-layout">
+            
+            <div class="column" id="attributes-section">
+                <h3>Atributos</h3>
+                <div class="total-pool">Total gastado: <span id="attr-total-display">4</span> / 10</div>
+                
+                <div class="row-item"><label for="attr-fuerza">Fuerza</label><input type="number" id="attr-fuerza" class="attr-input" value="1" min="1" max="5"></div>
+                <div class="row-item"><label for="attr-destreza">Destreza</label><input type="number" id="attr-destreza" class="attr-input" value="1" min="1" max="5"></div>
+                <div class="row-item"><label for="attr-inteligencia">Inteligencia</label><input type="number" id="attr-inteligencia" class="attr-input" value="1" min="1" max="5"></div>
+                <div class="row-item"><label for="attr-astucia">Astucia</label><input type="number" id="attr-astucia" class="attr-input" value="1" min="1" max="5"></div>
+
+                <div class="secondary-container">
+                    <h3>Secundarios</h3>
+                    <div class="secondary-grid">
+                        <div class="sec-box">
+                            <label>Salud</label>
+                            <div class="stat-interactive-counter">
+                                <button type="button" class="btn-counter sheet-ctrl" onclick="modifyStat('salud', -1)">-</button>
+                                <span id="val-salud" class="display-value">6</span>
+                                <button type="button" class="btn-counter sheet-ctrl" onclick="modifyStat('salud', 1)">+</button>
+                            </div>
+                        </div>
+                        <div class="sec-box">
+                            <label>Puntos de Armadura</label>
+                            <div class="stat-interactive-counter">
+                                <button type="button" class="btn-counter sheet-ctrl" onclick="modifyStat('armadura', -1)">-</button>
+                                <span id="val-armadura" class="display-value">0 / 0</span>
+                                <button type="button" class="btn-counter sheet-ctrl" onclick="modifyStat('armadura', 1)">+</button>
+                            </div>
+                        </div>
+                        <div class="sec-box">
+                            <label>Foco</label>
+                            <div class="stat-interactive-counter">
+                                <button type="button" class="btn-counter sheet-ctrl" onclick="modifyStat('foco', -1)">-</button>
+                                <span id="val-foco" class="display-value">2</span>
+                                <button type="button" class="btn-counter sheet-ctrl" onclick="modifyStat('foco', 1)">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="column" id="skills-section">
+                <h3>Habilidades</h3>
+                <div class="total-pool">Total gastado: <span id="skills-total-display">0</span> / 10</div>
+                <div id="skills-container"></div>
+            </div>
+
+            <div class="column">
+                <h3>Dotes y Equipo</h3>
+                
+                <div class="collection-section">
+                    <div class="collection-header">
+                        <h4>Dotes Especiales (<span id="count-dotes">0</span>/<span id="max-dotes-label">2</span>)</h4>
+                        <button type="button" class="btn-add" id="btn-add-dotes" onclick="openModal('dotes')">+ Dote</button>
+                    </div>
+                    <div class="item-list" id="list-dotes"></div>
+                </div>
+
+                <div class="collection-section">
+                    <div class="collection-header">
+                        <h4>Armas</h4>
+                        <button type="button" class="btn-add" onclick="openModal('armas')">+ Arma</button>
+                    </div>
+                    <div class="item-list" id="list-armas"></div>
+                </div>
+
+                <div class="collection-section">
+                    <div class="collection-header">
+                        <h4>Armaduras</h4>
+                        <button type="button" class="btn-add" onclick="openModal('armaduras')">+ Armadura</button>
+                    </div>
+                    <div class="item-list" id="list-armaduras"></div>
+                </div>
+
+                <div class="collection-section">
+                    <div class="collection-header">
+                        <h4>Equipo General</h4>
+                        <button type="button" class="btn-add" onclick="openModal('equipo')">+ Objeto</button>
+                    </div>
+                    <div class="item-list" id="list-equipo"></div>
+                </div>
+            </div>
+
+        </div>
+
+
+        </div>
+    </div>
+
+</div>
+
+<div class="modal-overlay" id="main-modal">
+    <div class="modal-box">
+        <h3 id="modal-title">Añadir</h3>
+        <input type="hidden" id="current-category">
+        <input type="hidden" id="edit-index" value="-1">
+        
+        <div class="input-group">
+            <label for="item-name">Nombre / Título</label>
+            <input type="text" id="item-name" placeholder="Ej. Camisote de cuero, Espada...">
+        </div>
+
+        <div id="weapon-extra-fields" style="display: none;">
+            <div class="input-group">
+                <label for="weapon-type">Tipo de Arma</label>
+                <select id="weapon-type">
+                    <option value="cc">Cuerpo a cuerpo</option>
+                    <option value="dist">A distancia</option>
+                </select>
+            </div>
+            <div class="modal-row-grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="input-group">
+                    <label for="weapon-damage">Daño</label>
+                    <input type="text" id="weapon-damage" placeholder="Ej. 1d8+2">
+                </div>
+                <div class="input-group">
+                    <label for="weapon-mod">Mod. Ataque</label>
+                    <input type="number" id="weapon-mod" value="0">
+                </div>
+            </div>
+        </div>
+
+        <div id="armor-extra-fields" style="display: none;">
+            <div class="modal-row-grid">
+                <div class="input-group">
+                    <label for="armor-pts">Puntos Armadura</label>
+                    <input type="number" id="armor-pts" value="0" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="armor-blindaje">Blindaje</label>
+                    <input type="number" id="armor-blindaje" value="0" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="armor-penalizador">Penalizador</label>
+                    <input type="number" id="armor-penalizador" value="0" min="0">
+                </div>
+            </div>
+        </div>
+        
+        <div class="input-group" style="margin-top: 5px;">
+            <label for="item-desc">Descripción / Propiedades</label>
+            <textarea id="item-desc" rows="3" placeholder="Escribe los detalles..."></textarea>
+        </div>
+        
+        <div class="modal-buttons">
+            <button type="button" class="btn-add" onclick="closeModal()" style="background:none; border:none;">Cancelar</button>
+            <button type="button" class="btn-add" onclick="saveItem()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE TIRADA DE ATAQUE -->
+<div class="modal-overlay" id="attack-modal" style="display:none;">
+    <div class="modal-box">
+        <h3 style="font-family:'Cinzel',serif; color:#ff6b6b; margin:0 0 16px 0; letter-spacing:2px; font-size:1rem;">⚔ TIRADA DE ATAQUE</h3>
+
+        <div class="attack-modal-pool-display">
+            Dados base de ataque: <span id="attack-base-dice">0</span>
+        </div>
+
+        <div class="attack-modal-controls">
+            <div>
+                <label>Modificador</label>
+                <div class="attack-stepper">
+                    <button type="button" onclick="changeAttackMod(-1)">−</button>
+                    <span id="attack-mod-display">0</span>
+                    <button type="button" onclick="changeAttackMod(1)">+</button>
+                </div>
+            </div>
+            <div>
+                <label>Nivel de defensa enemigo</label>
+                <div class="attack-stepper">
+                    <button type="button" onclick="changeDefenseLevel(-1)">−</button>
+                    <span id="attack-defense-display">1</span>
+                    <button type="button" onclick="changeDefenseLevel(1)">+</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="attack-modal-pool-display" style="margin-bottom:14px;">
+            Total dados a lanzar: <span id="attack-total-dice">0</span>d6
+        </div>
+
+        <button type="button" id="btn-roll-attack" onclick="rollAttack()">🎲 LANZAR ATAQUE</button>
+
+        <div class="dice-results-area">
+            <div class="dice-results-label" id="attack-dice-label">DADOS</div>
+            <div class="dice-results-grid" id="attack-dice-grid"></div>
+        </div>
+
+        <div class="attack-result-box" id="attack-result-box">
+            <div class="result-title" id="attack-result-title"></div>
+            <div class="result-detail" id="attack-result-detail"></div>
+        </div>
+
+        <div class="modal-buttons" style="margin-top:16px;">
+            <button type="button" class="btn-add" onclick="closeAttackModal()">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE TIRADA DE DADOS -->
+<div class="modal-overlay" id="dice-modal" style="display:none;">
+    <div class="modal-box">
+        <h3 style="font-family:'Cinzel',serif; color:var(--gold); margin:0 0 16px 0; letter-spacing:2px; font-size:1rem;">⚄ TIRADA DE DADOS</h3>
+
+        <div class="dice-selectors">
+            <div>
+                <label>Atributo</label>
+                <select id="dice-attr-select"></select>
+            </div>
+            <div>
+                <label>Habilidad</label>
+                <select id="dice-skill-select"></select>
+            </div>
+        </div>
+
+        <div class="dice-pool-info">
+            Dados a lanzar: <span id="dice-pool-count">0</span>d6
+        </div>
+
+        <button type="button" id="btn-roll-dice" onclick="rollDice()">🎲 LANZAR</button>
+
+        <div class="dice-results-area">
+            <div class="dice-results-label" id="dice-results-label">RESULTADO</div>
+            <div class="dice-results-grid" id="dice-results-grid"></div>
+            <div class="dice-summary" id="dice-summary">
+                <span class="successes-count" id="dice-successes">0</span> éxitos (6s)
+            </div>
+        </div>
+
+        <div class="modal-buttons" style="margin-top:16px;">
+            <button type="button" class="btn-add" onclick="closeDiceModal()">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const listaHabilidades = ["Atletismo", "Cabalgar", "Combate a dist.", "Combate C.a.C", "Juegos de manos", "Medicina", "Navegación", "Observación", "Oficio/Arte", "Presencia", "Saber", "Sigilo", "Supervivencia"];
+    const personajeData = { dotes: [], armas: [], armaduras: [], equipo: [], portrait: null };
+    
+    let faseActual = 1; 
+    let instantaneaBase = {}; 
+
+    const partidaVariables = {
+        saludMax: 6,
+        saludActual: 6,
+        focoMax: 2,
+        focoActual: 2,
+        armaduraMax: 0,
+        armaduraActual: 0,
+        blindajeTotal: 0,
+        penalizadorTotal: 0,
+        modoActivo: 'cc', 
+        modAdicional: 0,
+        dadosAtaque: 0,
+        dadosDefensa: 0,
+        reservaCalculada: 0,
+        fortalezaFija: 1 
+    };
+
+    const skillsContainer = document.getElementById('skills-container');
+    listaHabilidades.forEach((habilidad, index) => {
+        const idSanitizado = 'skill-' + index;
+        const row = document.createElement('div');
+        row.className = 'row-item';
+        row.innerHTML = `<label for="${idSanitizado}">${habilidad}</label><input type="number" id="${idSanitizado}" class="skill-input" value="0" min="0" max="5">`;
+        skillsContainer.appendChild(row);
+    });
+
+    const attrFuerza = document.getElementById('attr-fuerza');
+    const attrDestreza = document.getElementById('attr-destreza');
+    const attrAstucia = document.getElementById('attr-astucia');
+    const attrInputs = document.querySelectorAll('.attr-input');
+    const attrSection = document.getElementById('attributes-section');
+    const attrTotalDisplay = document.getElementById('attr-total-display');
+    
+    const valSalud = document.getElementById('val-salud');
+    const valFoco = document.getElementById('val-foco');
+    const valArmadura = document.getElementById('val-armadura');
+    const combatValSalud = document.getElementById('combat-val-salud');
+    const combatValFoco = document.getElementById('combat-val-foco');
+    const combatValArmadura = document.getElementById('combat-val-armadura');
+
+    const skillInputs = document.querySelectorAll('.skill-input');
+    const skillsSection = document.getElementById('skills-section');
+    const skillsTotalDisplay = document.getElementById('skills-total-display');
+
+    const btnPhase2Start = document.getElementById('btn-phase2-start');
+    const btnGameStart = document.getElementById('btn-game-start');
+    const phaseTextInstruction = document.getElementById('phase-text-instruction');
+    const poolWrapper = document.getElementById('pool-wrapper');
+    const freePointsDisplay = document.getElementById('free-points-display');
+    const maxDotesLabel = document.getElementById('max-dotes-label');
+
+    function masterValidator() {
+        let totalAttr = 0;
+        attrInputs.forEach(input => totalAttr += parseInt(input.value) || 0);
+        attrTotalDisplay.textContent = totalAttr;
+        
+        if (totalAttr > 10 && faseActual === 1) attrSection.classList.add('alert-red');
+        else attrSection.classList.remove('alert-red');
+
+        const fuerza = parseInt(attrFuerza.value) || 0;
+        const destreza = parseInt(attrDestreza.value) || 0;
+        const astucia = parseInt(attrAstucia.value) || 0;
+        
+        partidaVariables.saludMax = (fuerza + 1) * 3;
+        partidaVariables.focoMax = destreza + astucia;
+
+        // Recalcular máximos de armadura basándose en la lista guardada de forma automática
+        let totalArmaduraPts = 0;
+        let totalBlindaje = 0;
+        let totalPenalizador = 0;
+        personajeData.armaduras.forEach(a => {
+            totalArmaduraPts += a.pts;
+            totalBlindaje += a.blindaje;
+            totalPenalizador += a.penalizador;
+        });
+        partidaVariables.armaduraMax = totalArmaduraPts;
+        partidaVariables.blindajeTotal = totalBlindaje;
+        partidaVariables.penalizadorTotal = totalPenalizador;
+
+        if (faseActual < 3) {
+            partidaVariables.armaduraActual = totalArmaduraPts; // En diseño va al máximo siempre
+            valSalud.textContent = partidaVariables.saludMax;
+            valFoco.textContent = partidaVariables.focoMax;
+            
+            const armString = `${partidaVariables.armaduraActual} / ${partidaVariables.armaduraMax}`;
+            valArmadura.textContent = armString;
+            combatValSalud.textContent = partidaVariables.saludMax;
+            combatValFoco.textContent = partidaVariables.focoMax;
+            combatValArmadura.textContent = armString;
+        } else {
+            // Si estamos en modo juego, ajustar si la armadura actual supera el nuevo máximo por edición
+            if (partidaVariables.armaduraActual > partidaVariables.armaduraMax) {
+                partidaVariables.armaduraActual = partidaVariables.armaduraMax;
+            }
+            updateCountersUI();
+        }
+
+        let totalSkills = 0;
+        skillInputs.forEach(input => {
+            const val = parseInt(input.value) || 0;
+            totalSkills += val;
+            if (val > 3 && faseActual === 1) input.classList.add('alert-orange');
+            else input.classList.remove('alert-orange');
+        });
+        skillsTotalDisplay.textContent = totalSkills;
+        
+        if (totalSkills > 10 && faseActual === 1) skillsSection.classList.add('alert-red');
+        else skillsSection.classList.remove('alert-red');
+
+        if (faseActual === 1) {
+            if (totalAttr === 10 && totalSkills === 10 && personajeData.dotes.length === 2) {
+                btnPhase2Start.disabled = false;
+            } else {
+                btnPhase2Start.disabled = true;
+            }
+        } 
+        else if (faseActual === 2) {
+            evaluatePhase2Costs();
+        }
+
+    }
+
+    attrInputs.forEach(input => input.addEventListener('input', masterValidator));
+    skillInputs.forEach(input => input.addEventListener('input', masterValidator));
+
+    function activatePhase2() {
+        faseActual = 2;
+        btnPhase2Start.style.display = 'none';
+        phaseTextInstruction.textContent = "FASE 2: Incrementa valores con tus puntos libres (Atributo: 4pt | Habilidad: 2pt | Dote: 4pt)";
+        poolWrapper.style.display = 'block';
+        maxDotesLabel.textContent = "∞";
+
+        document.querySelectorAll('.attr-input, .skill-input').forEach(input => {
+            instantaneaBase[input.id] = parseInt(input.value) || 0;
+            input.min = input.value; 
+        });
+        instantaneaBase['total_dotes_f1'] = personajeData.dotes.length;
+        document.getElementById('btn-add-dotes').disabled = false;
+        masterValidator();
+    }
+
+    function evaluatePhase2Costs() {
+        let puntosGastados = 0;
+        document.querySelectorAll('.attr-input').forEach(input => {
+            puntosGastados += ((parseInt(input.value) || 0) - instantaneaBase[input.id]) * 4;
+        });
+        document.querySelectorAll('.skill-input').forEach(input => {
+            puntosGastados += ((parseInt(input.value) || 0) - instantaneaBase[input.id]) * 2;
+        });
+        const nuevasDotes = personajeData.dotes.length - instantaneaBase['total_dotes_f1'];
+        puntosGastados += nuevasDotes * 4;
+
+        const puntosRestantes = 12 - puntosGastados;
+        freePointsDisplay.textContent = puntosRestantes;
+
+        if (puntosRestantes < 0) {
+            freePointsDisplay.classList.add('alert-red');
+            btnGameStart.style.display = 'none';
+        } else {
+            freePointsDisplay.classList.remove('alert-red');
+            btnGameStart.style.display = (puntosRestantes === 0) ? 'block' : 'none';
+        }
+    }
+
+    function activateGameplayMode() {
+        faseActual = 3;
+        
+        partidaVariables.fortalezaFija = parseInt(attrFuerza.value) || 1;
+
+        document.getElementById('phase-banner-node').style.display = 'none';
+        btnGameStart.style.display = 'none';
+
+        document.querySelectorAll('.attr-input, .skill-input').forEach(input => input.disabled = true);
+        document.getElementById('btn-add-dotes').disabled = true;
+
+        document.getElementById('main-sheet-container').classList.add('game-mode-active');
+
+        partidaVariables.saludActual = partidaVariables.saludMax;
+        partidaVariables.focoActual = partidaVariables.focoMax;
+        partidaVariables.armaduraActual = partidaVariables.armaduraMax;
+        
+        updateCountersUI();
+        document.querySelectorAll('.btn-counter').forEach(btn => btn.style.display = 'inline-flex');
+
+        syncCombatWeaponsDropdowns();
+        calculateCombatPool();
+
+        document.getElementById('game-tabs-menu').style.display = 'block';
+        renderAllCollections();
+        updateSkillLabelsClickable();
+    }
+
+    function renderAllCollections() {
+        renderCollection('dotes');
+        renderCollection('armas');
+        renderCollection('armaduras');
+        renderCollection('equipo');
+    }
+
+    function updateCountersUI() {
+        const saludString = `${partidaVariables.saludActual} / ${partidaVariables.saludMax}`;
+        const focoString = `${partidaVariables.focoActual} / ${partidaVariables.focoMax}`;
+        const armaduraString = `${partidaVariables.armaduraActual} / ${partidaVariables.armaduraMax}`;
+
+        valSalud.textContent = saludString;
+        combatValSalud.textContent = saludString;
+
+        valFoco.textContent = focoString;
+        combatValFoco.textContent = focoString;
+
+        valArmadura.textContent = armaduraString;
+        combatValArmadura.textContent = armaduraString;
+    }
+
+    window.modifyStat = function(stat, cambio) {
+        if (faseActual !== 3) return;
+
+        if (stat === 'salud') {
+            let nuevoVal = partidaVariables.saludActual + cambio;
+            if (nuevoVal >= 0 && nuevoVal <= partidaVariables.saludMax) partidaVariables.saludActual = nuevoVal;
+        } else if (stat === 'foco') {
+            let nuevoVal = partidaVariables.focoActual + cambio;
+            if (nuevoVal >= 0 && nuevoVal <= partidaVariables.focoMax) partidaVariables.focoActual = nuevoVal;
+        } else if (stat === 'armadura') {
+            let nuevoVal = partidaVariables.armaduraActual + cambio;
+            if (nuevoVal >= 0 && nuevoVal <= partidaVariables.armaduraMax) partidaVariables.armaduraActual = nuevoVal;
+        }
+        updateCountersUI();
+        calculateCombatPool(); 
+    };
+
+    function changeTab(event, activeTabId) {
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+
+        document.getElementById(activeTabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    // --- LÓGICA DEL MOTOR DE COMBATE ---
+    function switchCombatMode(modo) {
+        partidaVariables.modoActivo = modo;
+        
+        document.getElementById('btn-mode-cc').classList.remove('active');
+        document.getElementById('btn-mode-dist').classList.remove('active');
+        document.getElementById('combat-content-cc').classList.remove('active');
+        document.getElementById('combat-content-dist').classList.remove('active');
+
+        if(modo === 'cc') {
+            document.getElementById('btn-mode-cc').classList.add('active');
+            document.getElementById('combat-content-cc').classList.add('active');
+        } else {
+            document.getElementById('btn-mode-dist').classList.add('active');
+            document.getElementById('combat-content-dist').classList.add('active');
+        }
+
+        partidaVariables.dadosAtaque = 0;
+        partidaVariables.dadosDefensa = 0;
+
+        calculateCombatPool();
+    }
+
+    function modifyAdditionalMod(cambio) {
+        partidaVariables.modAdicional += cambio;
+        document.getElementById('val-combat-mod-additional').textContent = (partidaVariables.modAdicional >= 0 ? '+' : '') + partidaVariables.modAdicional;
+        calculateCombatPool();
+    }
+
+    function syncCombatWeaponsDropdowns() {
+        const selectCC = document.getElementById('select-weapon-cc');
+        const selectDist = document.getElementById('select-weapon-dist');
+
+        const oldCCVal = selectCC.value;
+        const oldDistVal = selectDist.value;
+
+        selectCC.innerHTML = '';
+        selectDist.innerHTML = '';
+
+        let totalCC = 0;
+        let totalDist = 0;
+
+        personajeData.armas.forEach((arma, index) => {
+            const opt = document.createElement('option');
+            opt.value = index;
+            opt.textContent = `${arma.name} (${arma.mod >= 0 ? '+' : ''}${arma.mod})`;
+
+            if (arma.type === 'cc') {
+                selectCC.appendChild(opt);
+                totalCC++;
+            } else if (arma.type === 'dist') {
+                selectDist.appendChild(opt);
+                totalDist++;
+            }
+        });
+
+        if (totalCC === 0) selectCC.innerHTML = '<option value="-1">Ninguna (+0)</option>';
+        else if (oldCCVal !== "" && selectCC.querySelector(`option[value="${oldCCVal}"]`)) selectCC.value = oldCCVal;
+
+        if (totalDist === 0) selectDist.innerHTML = '<option value="-1">Ninguna (+0)</option>';
+        else if (oldDistVal !== "" && selectDist.querySelector(`option[value="${oldDistVal}"]`)) selectDist.value = oldDistVal;
+    }
+
+    function calculateCombatPool() {
+        if (faseActual !== 3) return;
+
+        let baseAtributo = 0;
+        let baseHabilidad = 0;
+        let modArma = 0;
+        let dañoTexto = 'Ninguno';
+
+        if (partidaVariables.modoActivo === 'cc') {
+            baseAtributo = parseInt(document.getElementById('attr-fuerza').value) || 0;
+            baseHabilidad = parseInt(document.getElementById('skill-2').value) || 0; 
+            
+            const indexArma = parseInt(document.getElementById('select-weapon-cc').value);
+            if (indexArma !== -1 && personajeData.armas[indexArma]) {
+                modArma = personajeData.armas[indexArma].mod;
+                dañoTexto = personajeData.armas[indexArma].damage;
+            }
+        } else {
+            baseAtributo = parseInt(document.getElementById('attr-destreza').value) || 0;
+            baseHabilidad = parseInt(document.getElementById('skill-7').value) || 0; 
+            
+            const indexArma = parseInt(document.getElementById('select-weapon-dist').value);
+            if (indexArma !== -1 && personajeData.armas[indexArma]) {
+                modArma = personajeData.armas[indexArma].mod;
+                dañoTexto = personajeData.armas[indexArma].damage;
+            }
+        }
+
+        // CÁLCULO DE PENALIZADORES POR SALUD
+        let puntosDaño = partidaVariables.saludMax - partidaVariables.saludActual;
+        let penalizadorSalud = 0;
+        if (partidaVariables.fortalezaFija > 0 && puntosDaño > 0) {
+            penalizadorSalud = Math.floor(puntosDaño / partidaVariables.fortalezaFija);
+        }
+
+        // Suma algebraica total (incluyendo el penalizador de armadura acumulado)
+        let baseSuma = baseAtributo + baseHabilidad;
+        let poolBruto = baseSuma + modArma + partidaVariables.modAdicional - penalizadorSalud - partidaVariables.penalizadorTotal;
+        
+        let poolFinal = poolBruto < 0 ? 0 : poolBruto;
+        partidaVariables.reservaCalculada = poolFinal;
+
+        const counterNode = document.getElementById('display-combat-pool-total');
+        counterNode.textContent = poolFinal;
+        document.getElementById('weapon-damage-combat-note').innerHTML = `Daño del arma activa: <strong>${dañoTexto}</strong>`;
+
+        // Renderizar desglose incluyendo penalizadores de armadura
+        document.getElementById('display-pool-breakdown').innerHTML = `
+            <span class="mod-pill">Atra+Hab: +${baseSuma}</span>
+            <span class="mod-pill">Arma: ${(modArma >= 0 ? '+' : '') + modArma}</span>
+            <span class="mod-pill">Situacional: ${(partidaVariables.modAdicional >= 0 ? '+' : '') + partidaVariables.modAdicional}</span>
+            <span class="mod-pill negative">Heridas: -${penalizadorSalud}</span>
+            <span class="mod-pill negative">Armadura: -${partidaVariables.penalizadorTotal}</span>
+        `;
+
+        if ((partidaVariables.dadosAtaque + partidaVariables.dadosDefensa) > poolFinal) {
+            partidaVariables.dadosAtaque = 0;
+            partidaVariables.dadosDefensa = 0;
+        }
+
+        updateAllocationUI();
+    }
+
+    function modifyTacticalAllocation(tipo, cambio) {
+        if (partidaVariables.reservaCalculada <= 0) return; 
+
+        const sumaActual = partidaVariables.dadosAtaque + partidaVariables.dadosDefensa;
+
+        if (tipo === 'ataque') {
+            let nuevoAtaque = partidaVariables.dadosAtaque + cambio;
+            if (nuevoAtaque >= 0 && (sumaActual + cambio <= partidaVariables.reservaCalculada)) {
+                partidaVariables.dadosAtaque = nuevoAtaque;
+            }
+        } else if (tipo === 'defensa') {
+            let nuevoDefensa = partidaVariables.dadosDefensa + cambio;
+            if (nuevoDefensa >= 0 && (sumaActual + cambio <= partidaVariables.reservaCalculada)) {
+                partidaVariables.dadosDefensa = nuevoDefensa;
+            }
+        }
+
+        updateAllocationUI();
+    }
+
+    function updateAllocationUI() {
+        document.getElementById('val-allocation-ataque').textContent = partidaVariables.dadosAtaque;
+        document.getElementById('val-allocation-defensa').textContent = partidaVariables.dadosDefensa;
+
+        const asignados = partidaVariables.dadosAtaque + partidaVariables.dadosDefensa;
+        const faltantes = partidaVariables.reservaCalculada - asignados;
+        
+        const statusNode = document.getElementById('display-pool-status');
+        const counterNode = document.getElementById('display-combat-pool-total');
+        const btnAllocators = document.querySelectorAll('.btn-alloc');
+
+        if (partidaVariables.saludActual <= 0) {
+            statusNode.textContent = "¡EL PERSONAJE HA MUERTO EN COMBATE!";
+            statusNode.className = "pool-status-text dead";
+            counterNode.classList.add('incapacitated');
+            btnAllocators.forEach(btn => btn.style.display = 'none');
+        } 
+        else if (partidaVariables.reservaCalculada === 0) {
+            statusNode.textContent = "INCAPACITADO PARA EL DESAFÍO (Reserva de dados agotada)";
+            statusNode.className = "pool-status-text alert-red";
+            counterNode.classList.add('incapacitated');
+            btnAllocators.forEach(btn => btn.style.display = 'none');
+        } 
+        else {
+            counterNode.classList.remove('incapacitated');
+            btnAllocators.forEach(btn => btn.style.display = 'inline-flex');
+            
+            if (faltantes > 0) {
+                statusNode.textContent = `Tienes ${faltantes} dados sin asignar de tu reserva`;
+                statusNode.className = "pool-status-text";
+            } else {
+                statusNode.textContent = `¡Reserva completamente distribuida! Listo para tirar`;
+                statusNode.className = "pool-status-text ready";
+            }
+        }
+
+        // REGLA DE TRADUCCIÓN MECÁNICA DE DEFENSA + BLINDAJE DINÁMICO
+        let nivelDefensaBase = 1;
+        let dDef = partidaVariables.dadosDefensa;
+
+        if (dDef < 2) nivelDefensaBase = 1;
+        else if (dDef >= 2 && dDef < 5) nivelDefensaBase = 2;
+        else if (dDef >= 5 && dDef < 8) nivelDefensaBase = 3;
+        else if (dDef >= 8) nivelDefensaBase = 4;
+
+        // Regla especial de blindaje condicional a la integridad de los puntos de armadura
+        let blindajeAplicado = 0;
+        let avisoDestruccion = "";
+        
+        if (partidaVariables.armaduraMax > 0) {
+            if (partidaVariables.armaduraActual > 0) {
+                blindajeAplicado = partidaVariables.blindajeTotal;
+            } else {
+                blindajeAplicado = 0;
+                avisoDestruccion = " <strong style='color:#ff4d4d;'>(¡Armadura Destruida!)</strong>";
+            }
+        }
+
+        let nivelDefensaFinal = nivelDefensaBase + blindajeAplicado;
+
+        document.getElementById('display-defense-level').textContent = nivelDefensaFinal;
+        
+        let descTexto = `Base por dados: ${nivelDefensaBase}`;
+        if (partidaVariables.armaduraMax > 0 && partidaVariables.armaduraActual > 0) {
+            descTexto += ` + Blindaje: ${blindajeAplicado}`;
+        }
+        descTexto += `. El rival necesita ${nivelDefensaFinal} éxitos para impactar.${avisoDestruccion}`;
+        
+        document.getElementById('display-defense-desc').innerHTML = descTexto;
+    }
+
+
+    // --- GESTIÓN DE MODALES ---
+    const mainModal = document.getElementById('main-modal');
+    const currentCategoryInput = document.getElementById('current-category');
+    const editIndexInput = document.getElementById('edit-index');
+    const itemNameInput = document.getElementById('item-name');
+    const itemDescInput = document.getElementById('item-desc');
+    const btnAddDotes = document.getElementById('btn-add-dotes');
+    const countDotesDisplay = document.getElementById('count-dotes');
+    
+    const weaponExtraFields = document.getElementById('weapon-extra-fields');
+    const weaponTypeInput = document.getElementById('weapon-type');
+    const weaponDamageInput = document.getElementById('weapon-damage');
+    const weaponModInput = document.getElementById('weapon-mod');
+
+    const armorExtraFields = document.getElementById('armor-extra-fields');
+    const armorPtsInput = document.getElementById('armor-pts');
+    const armorBlindajeInput = document.getElementById('armor-blindaje');
+    const armorPenalizadorInput = document.getElementById('armor-penalizador');
+
+    function openModal(category, index = -1) {
+        if (faseActual === 1 && category === 'dotes' && index === -1 && personajeData.dotes.length >= 2) {
+            alert("No puedes añadir más de 2 dotes durante la creación inicial.");
+            return;
+        }
+        
+        currentCategoryInput.value = category;
+        editIndexInput.value = index;
+        
+        // Configurar visibilidad de campos extras
+        weaponExtraFields.style.display = (category === 'armas') ? 'block' : 'none';
+        armorExtraFields.style.display = (category === 'armaduras') ? 'block' : 'none';
+
+        if (index === -1) {
+            document.getElementById('modal-title').textContent = "Añadir a " + category;
+            itemNameInput.value = '';
+            itemDescInput.value = '';
+            weaponTypeInput.value = 'cc';
+            weaponDamageInput.value = '';
+            weaponModInput.value = '0';
+            armorPtsInput.value = '0';
+            armorBlindajeInput.value = '0';
+            armorPenalizadorInput.value = '0';
+        } else {
+            document.getElementById('modal-title').textContent = "Editar en " + category;
+            const item = personajeData[category][index];
+            itemNameInput.value = item.name;
+            itemDescInput.value = item.desc;
+
+            if (category === 'armas') {
+                weaponTypeInput.value = item.type;
+                weaponDamageInput.value = item.damage;
+                weaponModInput.value = item.mod;
+            } else if (category === 'armaduras') {
+                armorPtsInput.value = item.pts;
+                armorBlindajeInput.value = item.blindaje;
+                armorPenalizadorInput.value = item.penalizador;
+            }
+        }
+
+        mainModal.style.display = 'flex';
+    }
+
+    function closeModal() {
+        mainModal.style.display = 'none';
+        itemNameInput.value = '';
+        itemDescInput.value = '';
+        weaponTypeInput.value = 'cc';
+        weaponDamageInput.value = '';
+        weaponModInput.value = '0';
+        armorPtsInput.value = '0';
+        armorBlindajeInput.value = '0';
+        armorPenalizadorInput.value = '0';
+        editIndexInput.value = "-1";
+    }
+
+    function saveItem() {
+        const cat = currentCategoryInput.value;
+        const index = parseInt(editIndexInput.value);
+        const name = itemNameInput.value.trim();
+        const desc = itemDescInput.value.trim();
+
+        if (!name) {
+            alert("Es obligatorio introducir un nombre.");
+            return;
+        }
+
+        let itemData = { name, desc };
+
+        if (cat === 'armas') {
+            itemData.type = weaponTypeInput.value; 
+            itemData.damage = weaponDamageInput.value.trim() || '1d4';
+            itemData.mod = parseInt(weaponModInput.value) || 0;
+        } 
+        else if (cat === 'armaduras') {
+            itemData.pts = Math.max(0, parseInt(armorPtsInput.value) || 0);
+            itemData.blindaje = Math.max(0, parseInt(armorBlindajeInput.value) || 0);
+            itemData.penalizador = Math.max(0, parseInt(armorPenalizadorInput.value) || 0);
+        }
+
+        if (index === -1) {
+            personajeData[cat].push(itemData);
+        } else {
+            personajeData[cat][index] = itemData;
+        }
+
+        renderCollection(cat);
+        closeModal();
+        masterValidator();
+
+        if (faseActual === 3) {
+            if (cat === 'armas') syncCombatWeaponsDropdowns();
+            calculateCombatPool();
+        }
+    }
+
+    function renderCollection(cat) {
+        const container = document.getElementById('list-' + cat);
+        container.innerHTML = '';
+        
+        personajeData[cat].forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'item-row';
+            
+            // Botón de borrar condicionado al modo de juego
+            const controlBorrar = (faseActual !== 3) ? `<span class="actions" onclick="event.stopPropagation(); deleteItem('${cat}', ${index})">Borrar</span>` : '';
+            
+            let subMetadatos = '';
+            if (item.damage) {
+                subMetadatos = ` <small style="color:#ff9f43;">(${item.type === 'cc' ? 'C.C.' : 'Dist.'} | Daño: ${item.damage} | Mod: ${item.mod >= 0 ? '+' : ''}${item.mod})</small>`;
+            } else if (item.pts !== undefined) {
+                subMetadatos = ` <small style="color:#54a0ff;">(PA: ${item.pts} | Blin: ${item.blindaje} | Pen: -${item.penalizador})</small>`;
+            }
+
+            // Removido el title="" para evitar tooltips nativos molestos
+            div.innerHTML = `
+                <div class="item-main-line">
+                    <span class="item-text" onclick="openModal('${cat}', ${index})">${item.name}${subMetadatos}</span>
+                    ${controlBorrar}
+                </div>
+                <div class="item-description-box">${item.desc || 'Sin descripción adicional.'}</div>
+            `;
+            container.appendChild(div);
+        });
+
+        if (cat === 'dotes') {
+            countDotesDisplay.textContent = personajeData.dotes.length;
+            if (faseActual === 1) btnAddDotes.disabled = (personajeData.dotes.length >= 2);
+        }
+    }
+
+    window.deleteItem = function(cat, index) {
+        if (faseActual === 2 && cat === 'dotes' && index < instantaneaBase['total_dotes_f1']) {
+            alert("No puedes eliminar dotes adquiridas durante la fase anterior.");
+            return;
+        }
+        personajeData[cat].splice(index, 1);
+        renderCollection(cat);
+        masterValidator();
+        if (faseActual === 3) {
+            if (cat === 'armas') syncCombatWeaponsDropdowns();
+            calculateCombatPool();
+        }
+    };
+
+    // =========================================================
+    // SISTEMA DE PERSISTENCIA AUTOMÁTICA (localStorage)
+    // IMPORTANTE: estas funciones deben estar declaradas ANTES
+    // de la primera llamada a masterValidator(), que las invoca.
+    // Se usan declaraciones function (hoisting) en lugar de
+    // window.X = function() para garantizar disponibilidad.
+    // =========================================================
+
+    function guardarEnLocalStorage() {
+        const inputsData = {};
+        document.querySelectorAll('.header-fields input, .attr-input, .skill-input, .free-textarea').forEach(input => {
+            inputsData[input.id] = input.value;
+        });
+
+        const dataCompleta = {
+            faseActual: faseActual,
+            instantaneaBase: instantaneaBase,
+            personajeData: personajeData,
+            partidaVariables: partidaVariables,
+            inputs: inputsData
+        };
+
+        localStorage.setItem('tribus_alen_pj_save', JSON.stringify(dataCompleta));
+    }
+
+    function cargarDesdeLocalStorage() {
+        const saveRaw = localStorage.getItem('tribus_alen_pj_save');
+        if (!saveRaw) return;
+
+        let dataCargada;
+        try { dataCargada = JSON.parse(saveRaw); }
+        catch (e) { console.error("Persistencia: JSON corrupto.", e); return; }
+
+        if (!dataCargada || !dataCargada.personajeData) return;
+
+        faseActual = dataCargada.faseActual || 1;
+        instantaneaBase = dataCargada.instantaneaBase || {};
+
+        personajeData.dotes     = dataCargada.personajeData.dotes     || [];
+        personajeData.armas     = dataCargada.personajeData.armas     || [];
+        personajeData.armaduras = dataCargada.personajeData.armaduras || [];
+        personajeData.equipo    = dataCargada.personajeData.equipo    || [];
+        personajeData.portrait  = dataCargada.personajeData.portrait  || null;
+
+        if (dataCargada.partidaVariables) {
+            Object.assign(partidaVariables, dataCargada.partidaVariables);
+        }
+
+        if (dataCargada.inputs) {
+            Object.keys(dataCargada.inputs).forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = dataCargada.inputs[id];
+            });
+        }
+
+        try { actualizarInterfazPorFase(faseActual); }
+        catch (e) { console.error("Persistencia: error en actualizarInterfazPorFase.", e); }
+
+        try {
+            renderAllCollections();
+            masterValidator();
+            restorePortrait();
+            guardarEnLocalStorage();
+            updateSkillLabelsClickable();
+        } catch (e) {
+            console.error("Persistencia: error en render/validate.", e);
+        }
+
+        console.log("Persistencia: ficha recuperada (fase " + faseActual + ").");
+    }
+
+    function actualizarInterfazPorFase(fase) {
+        if (fase === 1) {
+            document.getElementById('phase-banner-node').style.display = 'flex';
+            phaseTextInstruction.textContent = "FASE 1: Reparte exactamente 10 Atributos, 10 Habilidades y 2 Dotes.";
+            poolWrapper.style.display = 'none';
+            btnPhase2Start.style.display = 'block';
+            btnGameStart.style.display = 'none';
+            maxDotesLabel.textContent = "2";
+            document.querySelectorAll('.attr-input, .skill-input').forEach(i => i.disabled = false);
+            document.getElementById('btn-add-dotes').disabled = false;
+            document.querySelectorAll('.btn-counter').forEach(btn => btn.style.display = 'none');
+            document.getElementById('game-tabs-menu').style.display = 'none';
+            document.getElementById('tab-sheet').classList.add('active');
+            document.getElementById('tab-combat').classList.remove('active');
+        }
+        else if (fase === 2) {
+            document.getElementById('phase-banner-node').style.display = 'flex';
+            phaseTextInstruction.textContent = "FASE 2: Incrementa valores con tus puntos libres (Atributo: 4pt | Habilidad: 2pt | Dote: 4pt)";
+            poolWrapper.style.display = 'block';
+            btnPhase2Start.style.display = 'none';
+            btnGameStart.style.display = 'none';
+            maxDotesLabel.textContent = "∞";
+            document.querySelectorAll('.attr-input, .skill-input').forEach(i => {
+                i.disabled = false;
+                i.min = instantaneaBase[i.id];
+            });
+            document.getElementById('btn-add-dotes').disabled = false;
+            document.querySelectorAll('.btn-counter').forEach(btn => btn.style.display = 'none');
+            document.getElementById('game-tabs-menu').style.display = 'none';
+            document.getElementById('tab-sheet').classList.add('active');
+        }
+        else if (fase === 3) {
+            document.getElementById('phase-banner-node').style.display = 'none';
+            btnPhase2Start.style.display = 'none';
+            btnGameStart.style.display = 'none';
+            document.querySelectorAll('.attr-input, .skill-input').forEach(i => i.disabled = true);
+            document.getElementById('btn-add-dotes').disabled = true;
+            document.getElementById('main-sheet-container').classList.add('game-mode-active');
+            document.querySelectorAll('.btn-counter').forEach(btn => btn.style.display = 'inline-flex');
+            document.getElementById('game-tabs-menu').style.display = 'block';
+            syncCombatWeaponsDropdowns();
+            switchCombatMode(partidaVariables.modoActivo || 'cc');
+        }
+    }
+
+    function resetearPersistencia() {
+        if (!confirm("¿Estás seguro de que deseas borrar por completo este personaje? Perderás todo el progreso no exportado.")) return;
+
+        // 1. Limpiar localStorage
+        localStorage.removeItem('tribus_alen_pj_save');
+
+        // 2. Resetear variables de estado en memoria
+        faseActual = 1;
+        instantaneaBase = {};
+        personajeData.dotes     = [];
+        personajeData.armas     = [];
+        personajeData.armaduras = [];
+        personajeData.equipo    = [];
+        Object.assign(partidaVariables, {
+            saludMax: 6, saludActual: 6,
+            focoMax: 2,  focoActual: 2,
+            armaduraMax: 0, armaduraActual: 0,
+            blindajeTotal: 0, penalizadorTotal: 0,
+            modoActivo: 'cc', modAdicional: 0,
+            dadosAtaque: 0, dadosDefensa: 0,
+            reservaCalculada: 0, fortalezaFija: 1
+        });
+
+        // 3. Resetear todos los campos del DOM a su valor inicial
+        document.querySelectorAll('.attr-input').forEach(input => {
+            input.value = 1;
+        });
+        document.querySelectorAll('.skill-input').forEach(input => {
+            input.value = 0;
+        });
+        document.querySelectorAll('.header-fields input').forEach(input => {
+            input.value = (input.type === 'text') ? '' : 0;
+        });
+        document.querySelectorAll('.free-textarea').forEach(ta => {
+            ta.value = '';
+        });
+
+        // 4. Restaurar interfaz a Fase 1 y limpiar listas dinamicas
+        document.getElementById('main-sheet-container').classList.remove('game-mode-active');
+        actualizarInterfazPorFase(1);
+        renderAllCollections();
+        masterValidator();
+        removePortrait();
+        updateSkillLabelsClickable();
+    }
+
+    // --- EXPORTACIÓN E IMPORTACIÓN (YAML) ---
+
+    function exportarPersonaje() {
+        const inputsData = {};
+        document.querySelectorAll('.header-fields input, .attr-input, .skill-input, .free-textarea').forEach(input => {
+            inputsData[input.id] = input.value;
+        });
+
+        const dataCompleta = {
+            faseActual: faseActual,
+            instantaneaBase: instantaneaBase,
+            personajeData: personajeData,
+            partidaVariables: partidaVariables,
+            inputs: inputsData
+        };
+
+        try {
+            const yamlText = jsyaml.dump(dataCompleta);
+            const blob = new Blob([yamlText], { type: 'text/yaml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const nombrePersonaje = document.getElementById('name').value.trim() || 'Personaje';
+            a.href = url;
+            a.download = `${nombrePersonaje}_Alen.yaml`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            alert("Error al exportar el personaje: " + e.message);
+        }
+    }
+
+    function importarPersonaje(event) {
+        const archivo = event.target.files[0];
+        if (!archivo) return;
+
+        const lector = new FileReader();
+        lector.onload = function(e) {
+            try {
+                const dataCargada = jsyaml.load(e.target.result);
+
+                if (!dataCargada || !dataCargada.personajeData) {
+                    throw new Error("El archivo no tiene el formato válido de Tribus de Alén.");
+                }
+
+                faseActual = dataCargada.faseActual || 1;
+                instantaneaBase = dataCargada.instantaneaBase || {};
+                Object.assign(personajeData, dataCargada.personajeData);
+                Object.assign(partidaVariables, dataCargada.partidaVariables);
+
+                if (dataCargada.inputs) {
+                    Object.keys(dataCargada.inputs).forEach(id => {
+                        const elemento = document.getElementById(id);
+                        if (elemento) elemento.value = dataCargada.inputs[id];
+                    });
+                }
+
+                actualizarInterfazPorFase(faseActual);
+                renderAllCollections();
+                masterValidator();
+                restorePortrait();
+                guardarEnLocalStorage();
+                alert("¡Personaje cargado con éxito!");
+
+            } catch (err) {
+                alert("Error al procesar el archivo YAML: " + err.message);
+            }
+        };
+        lector.readAsText(archivo);
+        event.target.value = '';
+    }
+
+    // --- INICIALIZACIÓN ---
+    // cargarDesdeLocalStorage llama a masterValidator internamente tras restaurar el DOM.
+    // No llamar masterValidator antes: sobreescribiría localStorage con ceros.
+    cargarDesdeLocalStorage();
+    if (!localStorage.getItem('tribus_alen_pj_save')) masterValidator();
+
+    // Debounce para no saturar localStorage en cada pulsación de tecla
+    function debounce(fn, delay) {
+        let timer;
+        return function(...args) {
+            clearTimeout(timer);
+            timer = setTimeout(() => fn.apply(this, args), delay);
+        };
+    }
+    const guardarDebounced = debounce(guardarEnLocalStorage, 400);
+
+    document.addEventListener('input', function(e) {
+        if (e.target.matches('.header-fields input, .attr-input, .skill-input, .free-textarea')) {
+            guardarDebounced();
+        }
+    });
+
+    // ── TIRADA DE ATAQUE ─────────────────────────────────────────
+
+    let attackMod = 0;
+    let attackDefenseLevel = 1;
+
+    function openAttackModal() {
+        attackMod = 0;
+        attackDefenseLevel = 1;
+
+        const baseDice = partidaVariables.dadosAtaque;
+        document.getElementById('attack-base-dice').textContent = baseDice;
+        document.getElementById('attack-mod-display').textContent = 0;
+        document.getElementById('attack-defense-display').textContent = 1;
+        document.getElementById('attack-total-dice').textContent = Math.max(0, baseDice + attackMod);
+
+        // Limpiar resultados anteriores
+        document.getElementById('attack-dice-grid').innerHTML = '';
+        document.getElementById('attack-dice-label').style.display = 'none';
+        const resultBox = document.getElementById('attack-result-box');
+        resultBox.style.display = 'none';
+        resultBox.className = 'attack-result-box';
+
+        document.getElementById('attack-modal').style.display = 'flex';
+    }
+
+    function changeAttackMod(delta) {
+        const base = partidaVariables.dadosAtaque;
+        const next = attackMod + delta;
+        if (base + next < 0) return; // no bajar de 0 dados totales
+        attackMod = next;
+        document.getElementById('attack-mod-display').textContent = attackMod;
+        document.getElementById('attack-total-dice').textContent = Math.max(0, base + attackMod);
+    }
+
+    function changeDefenseLevel(delta) {
+        const next = attackDefenseLevel + delta;
+        if (next < 0 || next > 5) return;
+        attackDefenseLevel = next;
+        document.getElementById('attack-defense-display').textContent = attackDefenseLevel;
+    }
+
+    function rollAttack() {
+        const numDice = Math.max(0, partidaVariables.dadosAtaque + attackMod);
+        if (numDice <= 0) return;
+
+        const results = Array.from({ length: numDice }, () => Math.floor(Math.random() * 6) + 1);
+        // Éxitos: valores de 5 o 6
+        const successes = results.filter(r => r >= 5).length;
+
+        // Mostrar dados
+        const grid = document.getElementById('attack-dice-grid');
+        grid.innerHTML = '';
+        results.forEach(val => {
+            const die = document.createElement('div');
+            die.className = 'die' + (val >= 5 ? ' success' : '');
+            die.textContent = val;
+            grid.appendChild(die);
+        });
+        document.getElementById('attack-dice-label').style.display = 'block';
+
+        // Evaluar resultado
+        const resultBox = document.getElementById('attack-result-box');
+        const resultTitle = document.getElementById('attack-result-title');
+        const resultDetail = document.getElementById('attack-result-detail');
+
+        if (successes >= attackDefenseLevel) {
+            const focusBonus = successes - attackDefenseLevel;
+            resultBox.className = 'attack-result-box hit';
+            resultTitle.textContent = '✔ IMPACTO';
+            resultDetail.textContent = focusBonus > 0
+                ? `${successes} éxitos — superas la defensa por ${focusBonus}. Ganas ${focusBonus} punto${focusBonus !== 1 ? 's' : ''} de foco temporal${focusBonus !== 1 ? 'es' : ''}.`
+                : `${successes} éxito${successes !== 1 ? 's' : ''} — igualas la defensa. Sin foco temporal.`;
+        } else {
+            resultBox.className = 'attack-result-box miss';
+            resultTitle.textContent = '✘ FALLO';
+            resultDetail.textContent = `${successes} éxito${successes !== 1 ? 's' : ''} — necesitabas ${attackDefenseLevel}. El ataque no impacta.`;
+        }
+        resultBox.style.display = 'block';
+    }
+
+    function closeAttackModal() {
+        document.getElementById('attack-modal').style.display = 'none';
+    }
+
+    document.getElementById('attack-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeAttackModal();
+    });
+
+    // ── TIRADA DE DADOS ──────────────────────────────────────────
+
+    const listaAtributos = [
+        { label: 'Fuerza',      id: 'attr-fuerza' },
+        { label: 'Destreza',    id: 'attr-destreza' },
+        { label: 'Astucia',     id: 'attr-astucia'  },
+        { label: 'Inteligencia', id: 'attr-inteligencia' }
+    ];
+
+    function openDiceModal(skillIndex) {
+        // Poblar selector de atributos
+        const attrSel = document.getElementById('dice-attr-select');
+        attrSel.innerHTML = listaAtributos.map((a, i) =>
+            `<option value="${a.id}">${a.label} (${document.getElementById(a.id).value})</option>`
+        ).join('');
+
+        // Poblar selector de habilidades
+        const skillSel = document.getElementById('dice-skill-select');
+        skillSel.innerHTML = listaHabilidades.map((h, i) =>
+            `<option value="skill-${i}" ${i === skillIndex ? 'selected' : ''}>${h} (${document.getElementById('skill-'+i).value})</option>`
+        ).join('');
+
+        // Limpiar resultados anteriores
+        document.getElementById('dice-results-grid').innerHTML = '';
+        document.getElementById('dice-results-label').style.display = 'none';
+        document.getElementById('dice-summary').style.display = 'none';
+
+        updateDicePoolCount();
+
+        attrSel.addEventListener('change', updateDicePoolCount);
+        skillSel.addEventListener('change', updateDicePoolCount);
+
+        const modal = document.getElementById('dice-modal');
+        modal.style.display = 'flex';
+    }
+
+    function updateDicePoolCount() {
+        const attrId  = document.getElementById('dice-attr-select').value;
+        const skillId = document.getElementById('dice-skill-select').value;
+        const attrVal  = parseInt(document.getElementById(attrId).value)  || 0;
+        const skillVal = parseInt(document.getElementById(skillId).value) || 0;
+        document.getElementById('dice-pool-count').textContent = attrVal + skillVal;
+    }
+
+    function rollDice() {
+        const attrId  = document.getElementById('dice-attr-select').value;
+        const skillId = document.getElementById('dice-skill-select').value;
+        const attrVal  = parseInt(document.getElementById(attrId).value)  || 0;
+        const skillVal = parseInt(document.getElementById(skillId).value) || 0;
+        const numDice  = attrVal + skillVal;
+
+        if (numDice <= 0) return;
+
+        const results = Array.from({ length: numDice }, () => Math.floor(Math.random() * 6) + 1);
+        const successes = results.filter(r => r === 6).length;
+
+        const grid = document.getElementById('dice-results-grid');
+        grid.innerHTML = '';
+        results.forEach(val => {
+            const die = document.createElement('div');
+            die.className = 'die' + (val === 6 ? ' success' : '');
+            die.textContent = val;
+            grid.appendChild(die);
+        });
+
+        document.getElementById('dice-results-label').style.display = 'block';
+        document.getElementById('dice-successes').textContent = successes;
+        document.getElementById('dice-summary').style.display = 'block';
+    }
+
+    function closeDiceModal() {
+        const modal = document.getElementById('dice-modal');
+        modal.style.display = 'none';
+        // Eliminar listeners clonando los selectores para evitar acumulación
+        const attrSel  = document.getElementById('dice-attr-select');
+        const skillSel = document.getElementById('dice-skill-select');
+        attrSel.replaceWith(attrSel.cloneNode(true));
+        skillSel.replaceWith(skillSel.cloneNode(true));
+    }
+
+    // Cerrar al clicar fuera del modal
+    document.getElementById('dice-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeDiceModal();
+    });
+
+    // Añadir clase clicable a las labels de habilidades (solo en fase 3)
+    function updateSkillLabelsClickable() {
+        document.querySelectorAll('#skills-container .row-item label').forEach((label, index) => {
+            if (faseActual === 3) {
+                label.classList.add('skill-label-clickable');
+                label.onclick = () => openDiceModal(index);
+            } else {
+                label.classList.remove('skill-label-clickable');
+                label.onclick = null;
+            }
+        });
+    }
+
+    // ACCESIBILIDAD VISUAL
+    function toggleTheme() {
+        const current = localStorage.getItem('theme') || 'default';
+        const next =
+            current === 'default'
+            ? 'accessible'
+            : 'default';
+        setTheme(next);
+    }
+
+    function setTheme(theme) {
+        document.getElementById('theme-stylesheet')
+            .href =
+            theme === 'accessible'
+            ? 'css/theme-accessible.css'
+            : 'css/theme-default.css';
+        localStorage.setItem('theme', theme);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const saved =
+            localStorage.getItem('theme') || 'default';
+        setTheme(saved);
+    });
+
+    // ── RETRATO DE PERSONAJE ─────────────────────────────────────
+
+    const portraitDropZone = document.getElementById('portrait-drop-zone');
+
+    // Drag & drop
+    portraitDropZone.addEventListener('dragover', e => {
+        e.preventDefault();
+        portraitDropZone.classList.add('drag-over');
+    });
+    portraitDropZone.addEventListener('dragleave', () => {
+        portraitDropZone.classList.remove('drag-over');
+    });
+    portraitDropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        portraitDropZone.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) processPortraitFile(file);
+    });
+
+    function loadPortrait(event) {
+        const file = event.target.files[0];
+        if (file) processPortraitFile(file);
+        event.target.value = ''; // allow re-selecting same file
+    }
+
+    function processPortraitFile(file) {
+        // Warn if image is very large (>2MB before encoding)
+        if (file.size > 2 * 1024 * 1024) {
+            if (!confirm('La imagen pesa más de 2 MB. Las imágenes grandes pueden ralentizar el guardado. ¿Continuar?')) return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const base64 = e.target.result; // data:image/...;base64,...
+            setPortrait(base64);
+            guardarEnLocalStorage();
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function setPortrait(base64) {
+        const preview = document.getElementById('portrait-preview');
+        const placeholder = document.getElementById('portrait-placeholder');
+        const removeBtn = document.getElementById('btn-portrait-remove');
+
+        preview.src = base64;
+        preview.style.display = 'block';
+        placeholder.style.display = 'none';
+        removeBtn.style.display = 'block';
+
+        // Store in personajeData so it's included in export/import
+        personajeData.portrait = base64;
+    }
+
+    function removePortrait() {
+        const preview = document.getElementById('portrait-preview');
+        const placeholder = document.getElementById('portrait-placeholder');
+        const removeBtn = document.getElementById('btn-portrait-remove');
+
+        preview.src = '';
+        preview.style.display = 'none';
+        placeholder.style.display = 'flex';
+        removeBtn.style.display = 'none';
+
+        personajeData.portrait = null;
+        guardarEnLocalStorage();
+    }
+
+    function restorePortrait() {
+        if (personajeData.portrait) {
+            setPortrait(personajeData.portrait);
+        } else {
+            removePortrait();
+        }
+    }
+
+</script>
+
+</body>
+</html>

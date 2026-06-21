@@ -1,0 +1,851 @@
+/* ============================================================
+   base.css — Tribus de Alén
+   Estructura, layout y tipografía.
+   Sin colores ni valores visuales: esos van en theme-*.css
+   ============================================================ */
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    padding: 75px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Lora', serif;
+}
+
+/* ── NAVBAR ── */
+.top-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30px;
+    box-sizing: border-box;
+}
+
+.navbar-brand {
+    font-family: 'Cinzel', serif;
+    font-size: 1.4rem;
+    letter-spacing: 4px;
+    font-weight: bold;
+}
+
+.navbar-actions {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.btn-nav-phase {
+    padding: 8px 16px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-nav-phase:disabled { cursor: not-allowed; }
+
+.btn-nav-icon {
+    position: relative;
+    font-size: 1.2rem;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.2s, border-color 0.2s;
+    padding: 0;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.btn-nav-icon::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    padding: 4px 8px;
+    border-radius: 3px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 10000;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.btn-nav-icon:hover::after { opacity: 1; }
+
+.navbar-icon-group {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding-right: 15px;
+    margin-right: 0;
+    border-right-width: 1px;
+    border-right-style: solid;
+}
+
+/* ── CONTENEDOR PRINCIPAL ── */
+.sheet-container {
+    width: 100%;
+    min-width: 380px;
+    max-width: 1200px;
+    border-width: 3px;
+    border-style: solid;
+    border-radius: 6px;
+    padding: 25px;
+}
+
+h1, h3, h4 {
+    font-family: 'Cinzel', serif;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.game-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 2.2rem;
+    text-align: center;
+    margin-bottom: 20px;
+    letter-spacing: 3px;
+}
+
+/* ── PESTAÑAS ── */
+.game-tabs-navigation {
+    display: none;
+    margin-bottom: 25px;
+    padding-bottom: 5px;
+    border-bottom-width: 2px;
+    border-bottom-style: solid;
+}
+
+.tabs-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tab-button {
+    padding: 12px 24px;
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border-radius: 4px 4px 0 0;
+    transition: all 0.2s;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ── COMBATE ── */
+.combat-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+@media (min-width: 900px) {
+    .combat-layout { grid-template-columns: 5fr 3fr; }
+}
+
+.combat-block {
+    border-radius: 4px;
+    padding: 20px;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.combat-block h3 {
+    font-size: 1.1rem;
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+    text-align: center;
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+}
+
+.combat-mode-selector {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.btn-mode-tab {
+    font-family: 'Cinzel', serif;
+    padding: 8px 16px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 12px;
+    transition: all 0.2s;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.combat-mode-content { display: none; }
+.combat-mode-content.active { display: block; }
+
+.tactical-pool-card {
+    border-radius: 6px;
+    padding: 20px;
+    text-align: center;
+    margin-top: 20px;
+    border-width: 2px;
+    border-style: solid;
+}
+
+.pool-total-counter {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.pool-status-text {
+    font-size: 12px;
+    font-style: italic;
+    margin-bottom: 15px;
+}
+
+.tactical-distribution-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.defense-level-badge {
+    padding: 10px;
+    margin-top: 15px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-width: 1px;
+    border-style: dashed;
+}
+
+.defense-level-badge label {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.defense-level-value {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin: 2px 0;
+}
+
+.defense-level-desc {
+    font-size: 11px;
+    font-style: italic;
+    text-align: center;
+}
+
+.modifiers-breakdown {
+    margin: 10px 0;
+    font-size: 12px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.mod-pill {
+    padding: 2px 8px;
+    border-radius: 3px;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.combat-select {
+    width: 100%;
+    padding: 8px;
+    font-family: 'Lora', serif;
+    border-radius: 4px;
+    margin-top: 5px;
+    border-width: 1px;
+    border-style: solid;
+}
+
+/* ── TEXTAREA LIBRE ── */
+.free-textarea {
+    width: 100%;
+    min-height: 400px;
+    font-family: 'Lora', serif;
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 20px;
+    border-radius: 4px;
+    resize: vertical;
+    border-width: 1px;
+    border-style: solid;
+}
+
+/* ── BANNER DE FASE ── */
+.phase-banner {
+    padding: 12px 20px;
+    margin-bottom: 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 4px;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.phase-indicator {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 1px;
+}
+
+.points-pool {
+    font-family: 'Cinzel', serif;
+    font-size: 18px;
+    font-weight: bold;
+    display: none;
+}
+
+/* ── CABECERA ── */
+.header-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+    padding: 15px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.input-group label {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    margin-bottom: 4px;
+}
+
+.input-group input,
+.input-group select {
+    font-family: 'Lora', serif;
+    font-size: 14px;
+    padding: 6px 10px;
+    border-radius: 3px;
+    border-width: 1px;
+    border-style: solid;
+}
+
+/* ── LAYOUT PRINCIPAL ── */
+.main-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+@media (min-width: 900px) {
+    .main-layout { grid-template-columns: 2fr 3fr 3fr; }
+}
+
+.column {
+    border-radius: 4px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.column h3 {
+    font-size: 1rem;
+    padding-bottom: 5px;
+    margin-bottom: 12px;
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+}
+
+.total-pool {
+    font-size: 11px;
+    margin-bottom: 12px;
+    font-style: italic;
+}
+
+/* ── FILAS DE CONTADORES ── */
+.row-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 14px;
+    padding: 2px 0;
+}
+
+.row-item label { font-weight: 600; }
+
+.row-item input {
+    width: 45px;
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    border-radius: 3px;
+    padding: 3px;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.row-item input:disabled {
+    opacity: 0.85;
+    cursor: not-allowed;
+}
+
+/* ── SECUNDARIOS ── */
+.secondary-container {
+    margin-top: auto;
+    padding-top: 20px;
+}
+
+.secondary-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.sec-box {
+    padding: 10px;
+    text-align: center;
+    border-radius: 4px;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.sec-box label {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    display: block;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
+
+.stat-interactive-counter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-counter {
+    width: 24px;
+    height: 24px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: 'Cinzel', serif;
+    font-weight: bold;
+    font-size: 14px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.sec-box span.display-value {
+    font-size: 18px;
+    font-weight: bold;
+    font-family: 'Cinzel Decorative', serif;
+    min-width: 50px;
+    display: inline-block;
+}
+
+/* ── COLECCIONES (DOTES, EQUIPO…) ── */
+.collection-section {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.collection-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.collection-header h4 { font-size: 13px; }
+
+.btn-add {
+    font-size: 10px;
+    padding: 3px 8px;
+    cursor: pointer;
+    font-family: 'Cinzel', serif;
+    border-radius: 2px;
+    transition: background 0.2s;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.btn-add:disabled { cursor: not-allowed; }
+
+.item-list {
+    border-radius: 3px;
+    min-height: 50px;
+    max-height: 120px;
+    overflow-y: auto;
+    padding: 6px;
+    border-width: 1px;
+    border-style: dashed;
+}
+
+.item-row {
+    display: flex;
+    flex-direction: column;
+    padding: 6px 0;
+    font-size: 12px;
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+}
+
+.item-main-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.item-row .item-text {
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.item-row .actions {
+    cursor: pointer;
+    font-size: 10px;
+    font-family: 'Cinzel', serif;
+    text-decoration: underline;
+}
+
+.item-description-box {
+    display: none;
+    margin-top: 4px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-style: italic;
+    border-left-width: 2px;
+    border-left-style: solid;
+    border-radius: 0 3px 3px 0;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.game-mode-active .item-row:hover .item-description-box { display: block; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-3px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── BOTONES DE FASE ── */
+.btn-phase-trigger {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    border-width: 2px;
+    border-style: solid;
+}
+
+#btn-phase2-start:disabled { cursor: not-allowed; }
+
+#btn-game-start { display: none; }
+
+/* ── MODAL ── */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-box {
+    width: 90%;
+    max-width: 450px;
+    padding: 20px;
+    border-radius: 4px;
+    border-width: 2px;
+    border-style: solid;
+}
+
+.modal-box input,
+.modal-box textarea,
+.modal-box select {
+    width: 100%;
+    padding: 8px;
+    margin: 6px 0 12px 0;
+    font-family: 'Lora', serif;
+    border-radius: 3px;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.modal-row-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 5px;
+}
+
+/* ── TIRADA DE ATAQUE ── */
+.btn-attack-roll {
+    width: 100%;
+    padding: 11px;
+    margin-top: 6px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background 0.2s, border-color 0.2s;
+    border-width: 1px;
+    border-style: solid;
+}
+
+#attack-modal .modal-box { max-width: 460px; }
+
+.attack-modal-pool-display {
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+}
+
+.attack-modal-pool-display span {
+    font-size: 1.15rem;
+    font-weight: bold;
+}
+
+.attack-modal-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.attack-modal-controls label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.attack-stepper {
+    display: flex;
+    align-items: center;
+    border-radius: 3px;
+    overflow: hidden;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.attack-stepper button {
+    width: 32px;
+    height: 34px;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    font-family: 'Cinzel', serif;
+    transition: background 0.15s;
+    flex-shrink: 0;
+}
+
+.attack-stepper span {
+    flex: 1;
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    padding: 4px 0;
+    min-width: 36px;
+}
+
+#btn-roll-attack {
+    width: 100%;
+    padding: 10px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background 0.2s;
+    margin-bottom: 16px;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.attack-result-box {
+    text-align: center;
+    padding: 12px;
+    border-radius: 4px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    display: none;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.attack-result-box .result-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+.attack-result-box .result-detail {
+    font-size: 0.75rem;
+    opacity: 0.85;
+    letter-spacing: 0.5px;
+}
+
+/* ── TIRADA DE DADOS (habilidades) ── */
+#dice-modal .modal-box { max-width: 480px; }
+
+.dice-selectors {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.dice-selectors label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.dice-pool-info {
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    margin-bottom: 14px;
+    letter-spacing: 1px;
+}
+
+.dice-pool-info span {
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+#btn-roll-dice {
+    width: 100%;
+    padding: 10px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-radius: 3px;
+    margin-bottom: 16px;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.dice-results-area { min-height: 48px; }
+
+.dice-results-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    display: none;
+}
+
+.dice-results-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+
+.die {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cinzel', serif;
+    font-size: 1.3rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    border-width: 2px;
+    border-style: solid;
+}
+
+.dice-summary {
+    text-align: center;
+    margin-top: 12px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    display: none;
+}
+
+.dice-summary .successes-count {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.skill-label-clickable {
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.skill-label-clickable::after {
+    content: ' ⚄';
+    font-size: 0.7em;
+    opacity: 0.5;
+}

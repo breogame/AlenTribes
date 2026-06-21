@@ -1,0 +1,491 @@
+/* ============================================================
+   theme-default.css — Tribus de Alén
+   Estética oscura de pergamino y oro.
+   ============================================================ */
+
+:root {
+    --gold:      #d4af37;
+    --gold-dark: #8c764d;
+
+    /* Semánticos de estado */
+    --color-success:     #4cd137;
+    --color-success-bg:  rgba(76, 209, 55, 0.1);
+    --color-success-glow:rgba(76, 209, 55, 0.4);
+    --color-danger:      #ff4d4d;
+    --color-danger-alt:  #ff6b6b;
+    --color-warning:     #ff9f43;
+    --color-info:        #54a0ff;
+
+    /* Tipografía */
+    --color-text:        #e6dfd3;
+    --color-text-muted:  #a69e92;
+    --color-text-dim:    #666;
+    --color-text-label:  #c4b9a6;
+
+    /* Fondos */
+    --color-bg-body:     #121212;
+    --color-bg-sheet:    #1e1e1e;
+    --color-bg-navbar:   linear-gradient(to bottom, #16191e, #0f1115);
+    --color-bg-modal:    #222;
+    --color-bg-block:    rgba(0, 0, 0, 0.3);
+    --color-bg-input:    rgba(0, 0, 0, 0.4);
+    --color-bg-item-desc:rgba(42, 34, 24, 0.6);
+    --color-bg-counter:  #3d3526;
+    --color-bg-counter-h:#544934;
+    --color-bg-phase:    rgba(42, 34, 24, 0.5);
+    --color-bg-tactical: radial-gradient(circle at center, #2d251a 0%, #17130e 100%);
+
+    /* Bordes */
+    --color-border:      #8c764d;
+    --color-border-subtle: rgba(140, 118, 77, 0.2);
+    --color-border-faint:  rgba(140, 118, 77, 0.15);
+    --color-border-mid:    rgba(140, 118, 77, 0.25);
+    --color-border-navbar: #333;
+
+    /* Fuente base */
+    --font-size-base: 1rem;
+}
+
+body {
+    background-color: var(--color-bg-body);
+    background-image:
+        radial-gradient(circle at 50% 50%, rgba(35,35,35,0.4) 0%, rgba(15,15,15,0.9) 100%),
+        repeating-linear-gradient(45deg, rgba(40,40,40,0.05) 0px, rgba(40,40,40,0.05) 2px, transparent 2px, transparent 10px);
+    color: var(--color-text);
+}
+
+/* ── NAVBAR ── */
+.top-navbar {
+    background: var(--color-bg-navbar);
+    border-bottom: 2px solid var(--gold-dark);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
+}
+
+.navbar-brand {
+    color: var(--gold);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.btn-nav-phase {
+    background: rgba(212, 175, 55, 0.05);
+    color: var(--gold);
+    border-color: var(--gold-dark);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+}
+
+.btn-nav-phase:hover:not(:disabled) {
+    background: var(--gold-dark);
+    color: #000;
+    text-shadow: none;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+}
+
+.btn-nav-phase:disabled {
+    border-color: #444;
+    color: #666;
+    background: rgba(0, 0, 0, 0.2);
+    text-shadow: none;
+}
+
+.btn-nav-icon {
+    background: transparent;
+    border-color: transparent;
+    color: var(--gold);
+}
+
+.btn-nav-icon:hover {
+    background: rgba(212, 175, 55, 0.1);
+    border-color: var(--gold-dark);
+}
+
+.btn-nav-icon.danger:hover {
+    background: rgba(220, 53, 69, 0.15);
+    border-color: #dc3545;
+    color: var(--color-danger-alt);
+}
+
+.btn-nav-icon::after {
+    background: #1a1a1a;
+    border-color: var(--gold-dark);
+    color: var(--gold);
+}
+
+.navbar-icon-group {
+    border-right-color: var(--color-border-navbar);
+}
+
+/* ── CONTENEDOR ── */
+.sheet-container {
+    background-color: var(--color-bg-sheet);
+    border-color: var(--gold-dark);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.6);
+}
+
+h1, h3, h4 { color: var(--gold-dark); }
+
+.game-title { text-shadow: 2px 2px 4px rgba(0,0,0,0.6); }
+
+/* ── PESTAÑAS ── */
+.game-tabs-navigation { border-bottom-color: var(--gold-dark); }
+
+.tab-button {
+    background: #1a1a1a;
+    border-color: rgba(140, 118, 77, 0.4);
+    color: var(--color-text-muted);
+}
+
+.tab-button:hover {
+    color: var(--color-text);
+    background: #262626;
+}
+
+.tab-button.active {
+    color: var(--color-text);
+    background: #3d3526;
+    border-color: var(--gold-dark);
+    border-bottom-color: #3d3526;
+    font-weight: bold;
+    box-shadow: 0 -4px 10px rgba(140, 118, 77, 0.15);
+}
+
+/* ── COMBATE ── */
+.combat-block {
+    background: var(--color-bg-block);
+    border-color: var(--color-border-mid);
+}
+
+.combat-block h3 { border-bottom-color: var(--gold-dark); }
+
+.btn-mode-tab {
+    background: rgba(0,0,0,0.5);
+    border-color: rgba(140, 118, 77, 0.4);
+    color: var(--color-text-muted);
+}
+
+.btn-mode-tab.active {
+    background: #3d3526;
+    color: var(--color-text);
+    border-color: var(--gold-dark);
+    font-weight: bold;
+    box-shadow: 0 0 10px rgba(140,118,77,0.2);
+}
+
+.tactical-pool-card {
+    background: var(--color-bg-tactical);
+    border-color: var(--gold-dark);
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.6);
+}
+
+.pool-total-counter {
+    color: var(--color-warning);
+    text-shadow: 0 0 10px rgba(255, 159, 67, 0.4);
+}
+
+.pool-total-counter.incapacitated {
+    color: var(--color-danger);
+    text-shadow: 0 0 12px rgba(255, 77, 77, 0.6);
+}
+
+.pool-status-text          { color: var(--color-warning); }
+.pool-status-text.ready    { color: var(--color-success); }
+.pool-status-text.dead     { color: var(--color-danger); font-weight: bold; }
+
+.defense-level-badge {
+    background: rgba(140, 118, 77, 0.15);
+    border-color: var(--gold-dark);
+}
+
+.defense-level-badge label { color: var(--color-text-muted); }
+
+.defense-level-value {
+    color: var(--color-info);
+    text-shadow: 0 0 8px rgba(84, 160, 255, 0.4);
+}
+
+.defense-level-desc { color: var(--color-text-label); }
+
+.modifiers-breakdown { color: var(--color-text-muted); }
+
+.mod-pill {
+    background: rgba(0,0,0,0.4);
+    border-color: rgba(140, 118, 77, 0.2);
+}
+
+.mod-pill.negative {
+    border-color: rgba(255, 77, 77, 0.4);
+    color: var(--color-danger);
+}
+
+.combat-select {
+    background: rgba(0,0,0,0.5);
+    border-color: var(--gold-dark);
+    color: var(--color-text);
+}
+
+.combat-select option { background: #222; }
+
+/* ── TEXTAREA ── */
+.free-textarea {
+    background: rgba(0, 0, 0, 0.4);
+    border-color: var(--gold-dark);
+    color: var(--color-text);
+}
+
+.free-textarea:focus {
+    outline: 1px solid var(--color-text);
+    background: rgba(0, 0, 0, 0.5);
+}
+
+/* ── BANNER DE FASE ── */
+.phase-banner {
+    background: var(--color-bg-phase);
+    border-color: var(--gold-dark);
+}
+
+.phase-indicator { color: var(--color-text-muted); }
+.points-pool     { color: var(--color-warning); }
+
+/* ── CABECERA ── */
+.header-fields {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(140, 118, 77, 0.15);
+}
+
+.input-group label { color: var(--color-text-muted); }
+
+.input-group input,
+.input-group select {
+    background: var(--color-bg-input);
+    border-color: var(--gold-dark);
+    color: var(--color-text);
+}
+
+.input-group input:focus,
+.input-group select:focus { outline: 1px solid var(--color-text); }
+
+/* ── COLUMNAS ── */
+.column {
+    background: rgba(0, 0, 0, 0.25);
+    border-color: var(--color-border-subtle);
+}
+
+.column h3 { border-bottom-color: var(--gold-dark); }
+
+.total-pool { color: var(--color-text-muted); }
+
+/* ── CONTADORES ── */
+.row-item input {
+    background: rgba(0, 0, 0, 0.5);
+    border-color: var(--gold-dark);
+    color: var(--color-text);
+}
+
+.row-item input:disabled {
+    color: var(--color-text);
+    border-color: rgba(140, 118, 77, 0.4);
+}
+
+.sec-box {
+    background: radial-gradient(circle at center, rgba(61, 53, 38, 0.2) 0%, rgba(0, 0, 0, 0.4) 100%);
+    border-color: var(--gold-dark);
+}
+
+.sec-box label { color: var(--color-text-muted); }
+
+.sec-box span.display-value {
+    text-shadow: 0 0 5px rgba(140, 118, 77, 0.5);
+}
+
+.btn-counter {
+    background: var(--color-bg-counter);
+    border-color: var(--gold-dark);
+    color: var(--color-text);
+}
+
+.btn-counter:hover {
+    background: var(--color-bg-counter-h);
+    color: #fff;
+}
+
+/* ── COLECCIONES ── */
+.collection-header h4 { color: var(--color-text-muted); }
+
+.btn-add {
+    background: var(--color-bg-counter);
+    border-color: var(--gold-dark);
+    color: var(--color-text);
+}
+
+.btn-add:hover:not(:disabled) { background: var(--color-bg-counter-h); }
+
+.btn-add:disabled {
+    background: #121212;
+    border-color: #444;
+    color: #555;
+}
+
+.item-list {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: rgba(140, 118, 77, 0.2);
+}
+
+.item-row { border-bottom-color: rgba(140, 118, 77, 0.1); }
+
+.item-row .item-text { color: var(--color-text); }
+.item-row .item-text:hover {
+    color: var(--gold-dark);
+    text-decoration: underline;
+}
+
+.item-row .actions { color: var(--color-danger); }
+.item-row .actions:hover { color: #ff3333; }
+
+.item-description-box {
+    background: var(--color-bg-item-desc);
+    border-left-color: var(--gold-dark);
+    color: var(--color-text-label);
+}
+
+/* ── BOTONES DE FASE ── */
+#btn-phase2-start {
+    background: #2a2218;
+    border-color: var(--gold-dark);
+    color: var(--color-text-muted);
+}
+
+#btn-phase2-start:disabled {
+    background: #1a1a1a;
+    border-color: #444;
+    color: #555;
+    box-shadow: none;
+}
+
+#btn-phase2-start:not(:disabled):hover {
+    color: var(--color-warning);
+    border-color: var(--color-warning);
+    background: #3d2a18;
+    box-shadow: 0 0 15px rgba(255, 159, 67, 0.2);
+}
+
+#btn-game-start {
+    background: #1c3d18;
+    border-color: var(--color-success);
+    color: var(--color-success);
+    box-shadow: 0 0 15px rgba(76, 209, 55, 0.15);
+}
+
+#btn-game-start:hover {
+    background: #275422;
+    box-shadow: 0 0 20px rgba(76, 209, 55, 0.3);
+}
+
+/* ── MODAL ── */
+.modal-overlay { background: rgba(0, 0, 0, 0.8); }
+
+.modal-box {
+    background: var(--color-bg-modal);
+    border-color: var(--gold-dark);
+    box-shadow: 0 0 25px rgba(0,0,0,0.7);
+}
+
+.modal-box input,
+.modal-box textarea,
+.modal-box select {
+    background: var(--color-bg-input);
+    border-color: var(--gold-dark);
+    color: #fff;
+}
+
+.modal-box input:focus,
+.modal-box textarea:focus,
+.modal-box select:focus { outline: 1px solid var(--color-text); }
+
+/* ── ALERTAS ── */
+.alert-red { color: var(--color-danger) !important; }
+.alert-red input { border-color: var(--color-danger) !important; color: var(--color-danger) !important; }
+.alert-orange input { border-color: var(--color-warning) !important; color: var(--color-warning) !important; }
+
+/* ── TIRADA DE ATAQUE ── */
+.btn-attack-roll {
+    background: rgba(220, 53, 69, 0.08);
+    border-color: #8b2a2a;
+    color: var(--color-danger-alt);
+}
+
+.btn-attack-roll:hover {
+    background: rgba(220, 53, 69, 0.18);
+    border-color: #dc3545;
+}
+
+.attack-modal-pool-display { color: var(--color-text-muted); }
+.attack-modal-pool-display span { color: var(--color-danger-alt); }
+.attack-modal-controls label { color: var(--color-text-muted); }
+
+.attack-stepper { border-color: var(--gold-dark); }
+
+.attack-stepper button {
+    background: rgba(0,0,0,0.4);
+    color: var(--gold);
+}
+
+.attack-stepper button:hover { background: rgba(212,175,55,0.15); }
+
+.attack-stepper span {
+    color: #fff;
+    background: rgba(0,0,0,0.3);
+}
+
+#btn-roll-attack {
+    background: rgba(220, 53, 69, 0.08);
+    border-color: #8b2a2a;
+    color: var(--color-danger-alt);
+}
+
+#btn-roll-attack:hover {
+    background: rgba(220, 53, 69, 0.2);
+    border-color: #dc3545;
+}
+
+.attack-result-box.hit {
+    border-color: var(--color-success);
+    background: var(--color-success-bg);
+    color: var(--color-success);
+}
+
+.attack-result-box.miss {
+    border-color: #555;
+    background: rgba(255,255,255,0.03);
+    color: #888;
+}
+
+/* ── TIRADA DE DADOS ── */
+.dice-selectors label  { color: var(--color-text-muted); }
+.dice-pool-info        { color: var(--color-text-muted); }
+.dice-pool-info span   { color: var(--gold); }
+.dice-results-label    { color: var(--color-text-dim); }
+
+#btn-roll-dice {
+    background: rgba(212, 175, 55, 0.08);
+    border-color: var(--gold-dark);
+    color: var(--gold);
+}
+
+#btn-roll-dice:hover { background: rgba(212, 175, 55, 0.18); }
+
+.die {
+    border-color: #555;
+    color: #ccc;
+    background: #1a1a1a;
+}
+
+.die.success {
+    border-color: var(--color-success);
+    color: var(--color-success);
+    background: var(--color-success-bg);
+    box-shadow: 0 0 8px var(--color-success-glow);
+}
+
+.dice-summary        { color: var(--color-text-muted); }
+.dice-summary .successes-count { color: var(--color-success); }
+
+.skill-label-clickable:hover { color: var(--gold); }
