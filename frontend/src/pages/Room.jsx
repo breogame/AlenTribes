@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { useRoom } from '@/hooks/useRoom';
+import { useGameState } from '@/hooks/useGameState';
 import MainMenu from '@/components/MainMenu';
 import DiceRollerPanel from '@/components/DiceRollerPanel';
 import RollHistoryPanel from '@/components/RollHistoryPanel';
@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import yaml from 'js-yaml';
 
 const DEFAULT_BG = '/bg-overlay.png';
+const STREAMING_KEY_PREFIX = 'rsb:streaming:';
 
 export default function Room() {
   const { token } = useParams();
@@ -31,6 +32,25 @@ export default function Room() {
 
   const [gmSecret, setGmSecret] = useState(null);
   const [myName, setMyName] = useState(null);
+  const [localRoomName, setLocalRoomName] = useState('');
+
+  // Streaming toggle (per-room). Default OFF for the GM so no WebSocket is
+  // opened until they explicitly enable it. Players (no `?gm=1`) always
+  // need streaming ON since they connect via the shared link.
+  const [streamingEnabled, setStreamingEnabled] = useState(() => {
+    if (!isGMParam) return true; // players are remote viewers
+    if (!token) return false;
+    try {
+      return localStorage.getItem(STREAMING_KEY_PREFIX + token) === '1';
+    } catch { return false; }
+  });
+
+  useEffect(() => {
+    if (!isGMParam || !token) return;
+    try {
+      localStorage.setItem(STREAMING_KEY_PREFIX + token, streamingEnabled ? '1' : '0');
+    } catch { /* ignore */ }
+  }, [isGMParam, token, streamingEnabled]);
 
   // Modal state
   const [showJoin, setShowJoin] = useState(true);
@@ -53,6 +73,7 @@ export default function Room() {
           const parsed = JSON.parse(raw);
           setGmSecret(parsed.gmSecret);
           setMyName(parsed.name || 'Game Master');
+          setLocalRoomName(parsed.roomName || '');
           setShowJoin(false);
           return;
         }
@@ -81,11 +102,13 @@ export default function Room() {
     setShowJoin(false);
   }
 
-  const { state, you, users, roomName, status, send } = useRoom({
+  const { state, you, users, roomName, status, send } = useGameState({
     token,
     name: myName,
     gmSecret,
     apiUrl,
+    streamingEnabled,
+    isGMFromUrl: isGMParam,
   });
 
   const isGM = !!you?.isGM;
@@ -281,7 +304,7 @@ export default function Room() {
       {myName && (
         <MainMenu
           isGM={isGM}
-          roomName={roomName}
+          roomName={roomName || localRoomName}
           users={users}
           diceType={diceType}
           soundOn={soundOn}
@@ -303,6 +326,18 @@ export default function Room() {
           onOpenOverlay={() => {
             const q = apiParam ? `?api=${apiParam}` : '';
             window.open(`/room/${token}/overlay${q}`, '_blank', 'noopener,noreferrer');
+          }}
+          streamingEnabled={streamingEnabled}
+          onToggleStreaming={() => {
+            setStreamingEnabled((prev) => {
+              const next = !prev;
+              if (next) {
+                toast.success('Retransmisión activada · WebSocket conectándose');
+              } else {
+                toast.info('Retransmisión detenida · jugando en local');
+              }
+              return next;
+            });
           }}
         />
       )}

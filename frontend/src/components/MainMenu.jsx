@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import {
   Plus, Library, Save, Upload, Dice6, ZoomIn, ZoomOut, RotateCcw,
   Trash2, Image as ImageIcon, Share2, MonitorPlay, Minus, ChevronDown,
+  Radio,
 } from 'lucide-react';
 
 const MIN_KEY = 'rsb:main-menu-min';
@@ -12,6 +13,7 @@ export default function MainMenu({
   onScaleUp, onScaleDown, onScaleReset, onClearBoard, onChangeBackground,
   backgroundShade, onChangeBackgroundShade,
   onShareLink, onOpenOverlay,
+  streamingEnabled, onToggleStreaming,
 }) {
   const fileInputRef = useRef(null);
   const bgInputRef = useRef(null);
@@ -46,7 +48,20 @@ export default function MainMenu({
     e.target.value = '';
   }
 
-  const statusColor = status === 'open' ? '#6ce090' : status === 'connecting' ? '#f0c86c' : '#f07a7a';
+  const statusColor = !streamingEnabled
+    ? '#8a8a8a'
+    : status === 'open'
+      ? '#6ce090'
+      : status === 'connecting'
+        ? '#f0c86c'
+        : '#f07a7a';
+  const statusLabel = !streamingEnabled
+    ? 'local'
+    : status === 'open'
+      ? 'en vivo'
+      : status === 'connecting'
+        ? 'conectando'
+        : 'sin conexión';
 
   return (
     <div
@@ -73,7 +88,7 @@ export default function MainMenu({
             {roomName || 'Sala'}
           </div>
           <div className="label-caps" style={{ marginTop: minimized ? 2 : 4 }}>
-            <span style={{ color: statusColor }}>●</span>{' '}
+            <span style={{ color: statusColor }} title={statusLabel}>●</span>{' '}
             {users.length} {users.length === 1 ? 'usuario' : 'usuarios'}
             {isGM && <span style={{ color: '#e8cd8c' }}> · GM</span>}
           </div>
@@ -172,15 +187,52 @@ export default function MainMenu({
                   {Math.round(backgroundShade ?? 55)}%
                 </span>
               </div>
-              <button className="menu-btn" onClick={onShareLink} data-testid="menu-share">
-                <Share2 size={16} /> Compartir enlace
-              </button>
-              <button className="menu-btn" onClick={onOpenOverlay} data-testid="menu-overlay">
-                <MonitorPlay size={16} /> Abrir overlay OBS
-              </button>
               <button className="menu-btn" onClick={onClearBoard} data-testid="menu-clear" style={{ color: '#f58585' }}>
                 <Trash2 size={16} /> Limpiar tablero
               </button>
+
+              <div className="h-px my-2" style={{ background: 'rgba(255,255,255,0.08)' }} />
+
+              <button
+                className="menu-btn"
+                onClick={onToggleStreaming}
+                data-testid="menu-toggle-streaming"
+                title={
+                  streamingEnabled
+                    ? 'Detener retransmisión: vuelves al modo local sin WebSocket.'
+                    : 'Activar retransmisión: abre la conexión para jugadores y overlay OBS.'
+                }
+                style={{
+                  color: streamingEnabled ? '#6ce090' : '#e8cd8c',
+                  borderColor: streamingEnabled ? 'rgba(108,224,144,0.35)' : undefined,
+                }}
+              >
+                <Radio size={16} />
+                {streamingEnabled ? 'Retransmisión activa' : 'Habilitar retransmisión'}
+                <span
+                  style={{
+                    marginLeft: 'auto',
+                    fontSize: '0.65rem',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: streamingEnabled ? '#6ce090' : '#8a8a8a',
+                  }}
+                  data-testid="menu-streaming-state"
+                >
+                  {streamingEnabled ? 'ON' : 'OFF'}
+                </span>
+              </button>
+
+              {streamingEnabled && (
+                <>
+                  <button className="menu-btn" onClick={onShareLink} data-testid="menu-share">
+                    <Share2 size={16} /> Compartir enlace
+                  </button>
+                  <button className="menu-btn" onClick={onOpenOverlay} data-testid="menu-overlay">
+                    <MonitorPlay size={16} /> Abrir overlay OBS
+                  </button>
+                </>
+              )}
             </>
           ) : (
             <>

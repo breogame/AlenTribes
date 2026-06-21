@@ -70,6 +70,29 @@ reglas de colores de dados específicas (D6/D12 y iniciativa=D3).
   (obsidiana + latón + carmesí)
 - data-testid en todos los elementos interactivos
 
+## Implementado (Jun 2026) ✅
+- **Toggle "Habilitar retransmisión"** (GM, por defecto OFF):
+  - Cuando OFF, el GM juega 100% local: el estado se gestiona con un reducer
+    cliente (`/src/lib/localReducer.js`) que replica `_apply_action` del backend
+    y se persiste en `localStorage` (`rsb:local-state:<token>`).
+  - **No se abre ningún WebSocket** mientras esté OFF — cumple el requisito
+    explícito del usuario de evitar tráfico innecesario.
+  - Al activarlo, el GM transmite su estado local mediante una nueva acción
+    `STATE_REPLACE` (GM-only) por WebSocket; el servidor hereda el estado y
+    a partir de ahí sincroniza con jugadores y overlay.
+  - Botones "Compartir enlace" y "Abrir overlay OBS" solo se muestran cuando
+    la retransmisión está activa.
+  - Indicador de estado en el header: gris ("local") / amarillo ("conectando")
+    / verde ("en vivo") / rojo ("sin conexión").
+- **Limpieza de dependencias**:
+  - Eliminado `@emergentbase/visual-edits` de `package.json` (devDeps) y del
+    require condicional en `craco.config.js`.
+  - Eliminado `package-lock.json` proveniente del pull; se regeneró
+    `yarn.lock` con `yarn install`.
+- **Persistencia del nombre de sala en local mode**: `Landing.jsx` ahora guarda
+  `roomName` en `localStorage` junto con las credenciales del GM, para que
+  el menú principal lo muestre correctamente incluso sin WebSocket.
+
 ## Implementado (Apr 2026) ✅
 - **Modo Overlay para OBS**: ruta `/room/{token}/overlay` — vista de solo lectura
   (tablero + historial, sin menú ni edición). Soporta `?transparent=1` para fondo

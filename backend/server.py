@@ -233,6 +233,16 @@ def _apply_action(room: Room, action: Dict[str, Any], sender_name: str) -> bool:
         state["history"] = []
         return True
 
+    elif atype == "STATE_REPLACE":
+        # GM-only: replace the entire room state. Used when the GM enables
+        # streaming after playing locally so the server inherits their state.
+        new_state = payload.get("state")
+        if isinstance(new_state, dict):
+            merged = _default_state()
+            merged.update(new_state)
+            room.state = merged
+            return True
+
     return False
 
 

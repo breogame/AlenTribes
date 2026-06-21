@@ -29,6 +29,7 @@ export default function Landing() {
         JSON.stringify({
           gmSecret: data.gmSecret,
           name: 'Game Master',
+          roomName: data.name || roomName || 'Partida de rol',
           apiSource: apiSource || 'local',
         })
       );
