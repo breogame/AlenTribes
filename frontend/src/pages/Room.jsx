@@ -16,6 +16,7 @@ import InfoDialog from '@/components/InfoDialog';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import MusicPanel from '@/components/MusicPanel';
 import StreamingRibbon from '@/components/StreamingRibbon';
+import BoardBackground from '@/components/BoardBackground';
 import { computeDerived, newCardTemplate, clampCardPatch, strippedTemplateFromCard } from '@/lib/cardUtils';
 import { resolveBackendUrl } from '@/lib/backend';
 import { performRoll } from '@/lib/diceLogic';
@@ -335,14 +336,9 @@ export default function Room() {
   const history = state?.history || [];
   const library = state?.library || [];
 
-  const bgStyle = useMemo(() => ({
-    backgroundImage: `url(${background})`,
-    '--bg-shade': backgroundShade / 100,
-  }), [background, backgroundShade]);
-
   return (
     <div className="board-root no-select" data-testid="board-root">
-      <div className="board-bg" style={bgStyle} />
+      <BoardBackground background={background} shade={backgroundShade} />
       <div className="grain-overlay" />
 
       {streamingEnabled && myName && (

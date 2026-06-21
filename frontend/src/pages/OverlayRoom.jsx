@@ -1,8 +1,9 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useRoom } from '@/hooks/useRoom';
 import CharacterCard from '@/components/CharacterCard';
 import RollHistoryPanel from '@/components/RollHistoryPanel';
+import BoardBackground from '@/components/BoardBackground';
 import { computeDerived } from '@/lib/cardUtils';
 import { resolveBackendUrl } from '@/lib/backend';
 
@@ -43,20 +44,13 @@ export default function OverlayRoom() {
   const background = state?.background || DEFAULT_BG;
   const backgroundShade = state?.backgroundShade ?? 55;
 
-  const bgStyle = useMemo(
-    () => (transparent
-      ? { display: 'none' }
-      : { backgroundImage: `url(${background})`, '--bg-shade': backgroundShade / 100 }),
-    [background, backgroundShade, transparent]
-  );
-
   return (
     <div
       className="board-root no-select"
       style={transparent ? { background: 'transparent' } : undefined}
       data-testid="overlay-root"
     >
-      {!transparent && <div className="board-bg" style={bgStyle} />}
+      {!transparent && <BoardBackground background={background} shade={backgroundShade} />}
       {!transparent && <div className="grain-overlay" />}
 
       <div className="board-surface">

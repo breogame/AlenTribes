@@ -4,8 +4,15 @@ import {
   Trash2, Image as ImageIcon, Share2, MonitorPlay, Minus, ChevronDown,
   Radio, Users,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const MIN_KEY = 'rsb:main-menu-min';
+
+// Soft and hard limits for the background file. Videos longer than a few
+// seconds quickly grow past localStorage's quota (~5 MB) and slow down WS
+// broadcasts, so we warn at 8 MB and refuse above 40 MB.
+const BG_SIZE_WARN = 8 * 1024 * 1024;
+const BG_SIZE_LIMIT = 40 * 1024 * 1024;
 
 export default function MainMenu({
   isGM, roomName, users, diceType, soundOn, globalScale, status,
@@ -43,10 +50,26 @@ export default function MainMenu({
   function handleBgFile(e) {
     const f = e.target.files?.[0];
     if (!f) return;
+    e.target.value = '';
+
+    const isVideo = (f.type || '').startsWith('video/');
+    const isImage = (f.type || '').startsWith('image/');
+    if (!isVideo && !isImage) {
+      toast.error('Formato no soportado. Usa una imagen o un vídeo (mp4, webm, ogg).');
+      return;
+    }
+    if (f.size > BG_SIZE_LIMIT) {
+      toast.error(`El archivo es demasiado grande (${(f.size / 1024 / 1024).toFixed(1)} MB). Máx. ${BG_SIZE_LIMIT / 1024 / 1024} MB.`);
+      return;
+    }
+    if (isVideo && f.size > BG_SIZE_WARN) {
+      toast.warning(`Vídeo de ${(f.size / 1024 / 1024).toFixed(1)} MB · puede que no se guarde en localStorage. Considera comprimirlo (loops cortos en webm rinden mejor).`);
+    }
+
     const reader = new FileReader();
     reader.onload = () => onChangeBackground(reader.result);
+    reader.onerror = () => toast.error('No se pudo leer el archivo.');
     reader.readAsDataURL(f);
-    e.target.value = '';
   }
 
   const statusColor = !streamingEnabled
@@ -160,7 +183,7 @@ export default function MainMenu({
               <input
                 ref={bgInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/*,video/mp4,video/webm,video/ogg,video/quicktime"
                 className="hidden"
                 onChange={handleBgFile}
                 data-testid="input-bg-file"

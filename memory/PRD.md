@@ -71,6 +71,25 @@ reglas de colores de dados específicas (D6/D12 y iniciativa=D3).
 - data-testid en todos los elementos interactivos
 
 ## Implementado (Jun 2026) ✅
+- **Fondos de vídeo animados**:
+  - Nuevo componente `BoardBackground.jsx` que detecta el tipo del fondo
+    (prefijo `data:video/`) y renderiza `<video autoplay loop muted playsInline>`
+    o el `<div>` con `background-image` clásico.
+  - El input "Cambiar fondo" acepta ahora imágenes y vídeos
+    (`mp4`, `webm`, `ogg`, `mov`).
+  - Validación: rechazo si el archivo supera 40 MB; aviso suave a partir de
+    8 MB para vídeos (`localStorage` tiene cuota limitada).
+  - Estilos CSS `.board-bg-video` + `.board-bg-shade` reproducen la misma
+    saturación/brillo y la viñeta radial dependiente de `--bg-shade` que
+    teníamos para imágenes.
+  - `OverlayRoom.jsx` también usa `BoardBackground`, de forma que el OBS
+    overlay también reproduce el vídeo (perfecto para escenas con hoguera,
+    nieve, lluvia, etc.).
+  - Compatibilidad total con la retransmisión: el data URL del vídeo viaja
+    por WebSocket como cualquier otro fondo y se sincroniza con jugadores y
+    overlay.
+
+## Implementado (Jun 2026 — anterior) ✅
 - **Indicador de PJ activos en el ribbon de retransmisión**:
   - El `StreamingRibbon` muestra ahora `🎲 N PJ activos` con icono de dado,
     contabilizando los `pj_name` distintos que han enviado tiradas en los
