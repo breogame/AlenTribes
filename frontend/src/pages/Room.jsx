@@ -143,6 +143,31 @@ export default function Room() {
   const background = state?.background || DEFAULT_BG;
   const backgroundShade = state?.backgroundShade ?? 55;
 
+  // Heartbeat used to recompute "PJ activos" so it expires after 5 minutes
+  // without any new event. We tick every 30 seconds.
+  const [activityTick, setActivityTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setActivityTick((n) => n + 1), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Distinct PJ names whose last roll arrived within the last 5 minutes.
+  const pjActiveCount = useMemo(() => {
+    const list = state?.history || [];
+    if (!list.length) return 0;
+    const cutoff = Date.now() - 5 * 60 * 1000;
+    const names = new Set();
+    for (const r of list) {
+      if (r?.type !== 'pj') continue;
+      const t = new Date(r.at).getTime();
+      if (Number.isFinite(t) && t >= cutoff) names.add(r.user || '');
+    }
+    return names.size;
+    // activityTick included so the count expires as time passes even when
+    // no new history events arrive.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.history, activityTick]);
+
   // PJ.html players post rolls to /api/dice/submit. We poll for new rolls
   // and forward them into the unified history through the same DICE_ROLL
   // action used by the in-board dice rollers — so they also propagate over
@@ -325,6 +350,7 @@ export default function Room() {
           status={status}
           userCount={users.length}
           isGM={isGM}
+          pjActiveCount={pjActiveCount}
           onStop={isGM ? () => {
             setStreamingEnabled(false);
             toast.info('Retransmisión detenida · jugando en local');
@@ -413,6 +439,7 @@ export default function Room() {
       {myName && (
         <RollHistoryPanel
           history={history}
+          currentUser={myName}
           isGM={isGM}
           onClear={clearHistory}
         />

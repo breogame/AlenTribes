@@ -71,6 +71,25 @@ reglas de colores de dados específicas (D6/D12 y iniciativa=D3).
 - data-testid en todos los elementos interactivos
 
 ## Implementado (Jun 2026) ✅
+- **Indicador de PJ activos en el ribbon de retransmisión**:
+  - El `StreamingRibbon` muestra ahora `🎲 N PJ activos` con icono de dado,
+    contabilizando los `pj_name` distintos que han enviado tiradas en los
+    últimos 5 minutos (tooltip incluido).
+  - Heartbeat de 30 s en `Room.jsx` para que el contador se enfríe sólo aún
+    sin nuevas tiradas; cálculo memoizado sobre `state.history`.
+- **Filtros en el historial de tiradas** (`RollHistoryPanel`):
+  - Chips: `Todos` · `Mías` · `PJ` + dropdown `Jugador ▾` con la lista de
+    nombres distintos del historial.
+  - Filtro persistido en `localStorage` (`rsb:history-filter`) entre sesiones;
+    se restablece automáticamente si el jugador filtrado desaparece tras un
+    `Limpiar historial`.
+  - Badge del filtro activo junto al título "Historial" + contador
+    `N de Total` debajo de los chips.
+  - Botón `X` para quitar el filtro y vacío contextual ("Ninguna tirada
+    coincide con el filtro").
+  - Dropdown se cierra al hacer click fuera; estilo con glass-morphism.
+
+## Implementado (Jun 2026 — anterior) ✅
 - **Tiradas externas desde PJ.html** (independiente de la retransmisión):
   - Nuevo endpoint REST en backend:
     - `POST /api/dice/session` → crea sesión, devuelve `{token, name}`.

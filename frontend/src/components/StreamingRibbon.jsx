@@ -1,9 +1,9 @@
 // Top-center pinned ribbon shown while the GM has streaming enabled.
 // Gives an unambiguous, persistent reminder that viewers and the OBS
 // overlay can see the board live. Hidden entirely when streaming is OFF.
-import { Radio, StopCircle } from 'lucide-react';
+import { Radio, StopCircle, Dice5 } from 'lucide-react';
 
-export default function StreamingRibbon({ status, userCount, isGM, onStop }) {
+export default function StreamingRibbon({ status, userCount, isGM, pjActiveCount = 0, onStop }) {
   const isLive = status === 'open';
   const isConnecting = status === 'connecting';
   const dotClass = isLive
@@ -26,6 +26,8 @@ export default function StreamingRibbon({ status, userCount, isGM, onStop }) {
     ? '1 espectador'
     : `${audience} espectadores`;
 
+  const pjLabel = pjActiveCount === 1 ? '1 PJ activo' : `${pjActiveCount} PJ activos`;
+
   return (
     <div
       className="streaming-ribbon"
@@ -40,6 +42,19 @@ export default function StreamingRibbon({ status, userCount, isGM, onStop }) {
       <span data-testid="streaming-ribbon-audience" style={{ color: 'rgba(243, 213, 140, 0.75)' }}>
         {audienceLabel}
       </span>
+      {pjActiveCount > 0 && (
+        <>
+          <span className="streaming-ribbon__sep" />
+          <span
+            data-testid="streaming-ribbon-pj"
+            style={{ color: '#7ec8e3', display: 'inline-flex', alignItems: 'center', gap: 5 }}
+            title="Jugadores que han enviado tiradas desde PJ.html en los últimos 5 minutos"
+          >
+            <Dice5 size={12} />
+            {pjLabel}
+          </span>
+        </>
+      )}
       {isGM && onStop && (
         <>
           <span className="streaming-ribbon__sep" />
